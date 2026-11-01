@@ -6,7 +6,7 @@ Built with [Arc Studio](https://studio.arc.io)
 
 > Arc Mainnet moves real USDC and transactions cannot be reversed. Test with small amounts, and review the code and any contract you deploy before relying on it.
 
-> The optional receipt contract keeps its original name, **ArcSend**: the source file, the onchain identifier `ArcSend.v1` and the `VITE_ARCSEND_CONTRACT_ADDRESS` variable are unchanged, so any existing deployment and configuration keep working.
+> The optional payments contract keeps its original name, **ArcSend**. It is now version 2 (onchain identifier `ArcSend.v2`): single and batch payments, payment requests and escrow. Version 1 was never deployed. The `VITE_ARCSEND_CONTRACT_ADDRESS` variable is unchanged.
 
 ## Features
 

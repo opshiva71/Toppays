@@ -18,8 +18,8 @@ import { ARC_MAINNET_CHAIN_ID } from './network'
 
 export { ARC_SEND_ABI }
 
-/** keccak256("ArcSend.v1"): what `identifier()` returns on a genuine ArcSend deployment. */
-export const ARC_SEND_IDENTIFIER = keccak256(toBytes('ArcSend.v1'))
+/** keccak256("ArcSend.v2"): what `identifier()` returns on a genuine ArcSend v2 deployment. */
+export const ARC_SEND_IDENTIFIER = keccak256(toBytes('ArcSend.v2'))
 
 export type ContractConfig =
   | { state: 'not-configured'; address: null; chainId: typeof ARC_MAINNET_CHAIN_ID }

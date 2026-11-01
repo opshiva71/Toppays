@@ -2,7 +2,9 @@
 
 Date: 2026-11-01. Target: Arc Mainnet (chain ID 5042). No contract was deployed and no funds were sent during this review.
 
-> The optional receipt contract keeps its original name, **ArcSend**: the source file, the onchain identifier `ArcSend.v1` and the `VITE_ARCSEND_CONTRACT_ADDRESS` variable are unchanged, so any existing deployment and configuration keep working.
+> The optional payments contract keeps its original name, **ArcSend**. It is now version 2 (onchain identifier `ArcSend.v2`): single and batch payments, payment requests and escrow. Version 1 was never deployed. The `VITE_ARCSEND_CONTRACT_ADDRESS` variable is unchanged.
+
+> This report covers the app and the original (v1) receipt helper. ArcSend v2 was written, reviewed and tested afterwards; see `contracts/ArcSend-design.md` and `docs/DEPLOYMENT.md`.
 
 ## Verdict
 
