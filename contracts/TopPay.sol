@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-/// @title ArcSend
+/// @title TopPay
 /// @notice Native USDC payments, requests and escrow for Arc Mainnet (chain ID 5042).
 /// @dev All amounts use native 18-decimal units: 1 USDC = 1e18, not the
 ///      6-decimal ERC-20 view. Only open escrows retain funds. No fees, admin,
 ///      recovery, receive or fallback exist; forcibly delivered funds stay locked.
-contract ArcSend {
+contract TopPay {
     /// @notice Version identifier for frontend verification.
+    /// @dev The tag is frozen at "ArcSend.v2", the contract's original name, so a contract deployed
+    ///      from the earlier ArcSend source is still recognized by the app. Do not change it.
     bytes32 public constant IDENTIFIER = keccak256("ArcSend.v2");
     /// @notice Maximum number of recipients in one batch.
     uint256 public constant MAX_BATCH = 100;
@@ -120,7 +122,7 @@ contract ArcSend {
     /// @param to Recipient of the full native value.
     /// @param memo Application-defined receipt reference.
     /// @dev msg.value is in native 18-decimal units (1 USDC = 1e18); reentrancy is blocked.
-    ///      A recipient must not call back into ArcSend from its receive hook: the
+    ///      A recipient must not call back into TopPay from its receive hook: the
     ///      callback reverts with ReentrantCall. If propagated, the payment fails
     ///      safely and funds stay with the sender.
     function send(address payable to, bytes32 memo) external payable nonReentrant {
@@ -139,7 +141,7 @@ contract ArcSend {
     /// @param memos Application-defined receipt references, one per recipient.
     /// @dev msg.value must exactly equal the checked sum; any failure reverts all sends.
     ///      Reentrancy is blocked throughout the batch. A recipient must not call
-    ///      back into ArcSend from its receive hook: the callback reverts with
+    ///      back into TopPay from its receive hook: the callback reverts with
     ///      ReentrantCall. If propagated, the payment fails safely and all batch
     ///      funds stay with the sender.
     ///      On Arc, USDC restrictions (blocklist, zero address) can reject a
@@ -176,7 +178,7 @@ contract ArcSend {
     ///      that payment and adds its amount to the refund. Before each call, gasleft()
     ///      must cover gasPerRecipient + SETTLEMENT_GAS_RESERVE or InsufficientGas
     ///      reverts the entire batch instead of falsely skipping a payment.
-    ///      A recipient must not call back into ArcSend from its receive hook: the
+    ///      A recipient must not call back into TopPay from its receive hook: the
     ///      callback reverts with ReentrantCall. If propagated, the payment fails
     ///      safely and its funds are refunded to the sender.
     ///      Failed amounts are refunded via a full-gas, revert-on-failure transfer: a failed
@@ -352,7 +354,7 @@ contract ArcSend {
     }
 
     /// @notice Return the public version identifier for frontend verification.
-    /// @return Version hash keccak256("ArcSend.v2").
+    /// @return Version hash keccak256("ArcSend.v2") (frozen tag, see IDENTIFIER).
     function identifier() external pure returns (bytes32) {
         return IDENTIFIER;
     }

@@ -1,6 +1,6 @@
-/** ABI of contracts/ArcSend.sol (v2). Generated from the forge build artifact; regenerate it if the contract changes. */
+/** ABI of contracts/TopPay.sol (v2). Generated from the forge build artifact; regenerate it if the contract changes. */
 
-export const ARC_SEND_ABI = [
+export const TOPPAY_ABI = [
   {
     type: 'function',
     name: 'IDENTIFIER',

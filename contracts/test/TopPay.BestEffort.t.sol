@@ -2,13 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {Vm} from "forge-std/Vm.sol";
-import {ArcSend} from "../ArcSend.sol";
+import {TopPay} from "../TopPay.sol";
 import {
-    ArcSendTestBase, Rejecter, NoReceive, Acceptor, GasBurner, NoRefundSender
-} from "./ArcSend.Base.t.sol";
+    TopPayTestBase, Rejecter, NoReceive, Acceptor, GasBurner, NoRefundSender
+} from "./TopPay.Base.t.sol";
 
 /// sendBatchBestEffort
-contract ArcSendBestEffortTest is ArcSendTestBase {
+contract TopPayBestEffortTest is TopPayTestBase {
     uint256 internal constant G = 100_000;
 
     function test_BestEffort_AllSucceed() public {
@@ -27,11 +27,11 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
 
     function test_BestEffort_AllSucceedEvents() public {
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
+        emit TopPay.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, carol, 2 ether, bytes32(uint256(2)));
+        emit TopPay.Payment(alice, carol, 2 ether, bytes32(uint256(2)));
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, 3 ether, 2);
+        emit TopPay.BatchSent(alice, 3 ether, 2);
         vm.prank(alice);
         arc.sendBatchBestEffort{value: 3 ether}(_t2(bob, carol), _a2(1 ether, 2 ether), _m(2), G);
     }
@@ -43,13 +43,13 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
         uint256 a = alice.balance;
 
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
+        emit TopPay.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.PaymentSkipped(alice, address(rej), 2 ether, bytes32(uint256(2)));
+        emit TopPay.PaymentSkipped(alice, address(rej), 2 ether, bytes32(uint256(2)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, dave, 3 ether, bytes32(uint256(3)));
+        emit TopPay.Payment(alice, dave, 3 ether, bytes32(uint256(3)));
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, 4 ether, 2);
+        emit TopPay.BatchSent(alice, 4 ether, 2);
 
         vm.prank(alice);
         uint256 refunded = arc.sendBatchBestEffort{value: 6 ether}(
@@ -80,11 +80,11 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
         uint256 a = alice.balance;
 
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.PaymentSkipped(alice, address(r1), 1 ether, bytes32(uint256(1)));
+        emit TopPay.PaymentSkipped(alice, address(r1), 1 ether, bytes32(uint256(1)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.PaymentSkipped(alice, address(r2), 2 ether, bytes32(uint256(2)));
+        emit TopPay.PaymentSkipped(alice, address(r2), 2 ether, bytes32(uint256(2)));
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, 0, 0);
+        emit TopPay.BatchSent(alice, 0, 0);
 
         vm.prank(alice);
         uint256 refunded =
@@ -101,27 +101,27 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
         arc.sendBatchBestEffort{value: 1 ether}(_t1(address(rej)), _a1(1 ether), _m(1), G);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs.length, 2); // PaymentSkipped + BatchSent
-        assertEq(logs[0].topics[0], ArcSend.PaymentSkipped.selector);
-        assertEq(logs[1].topics[0], ArcSend.BatchSent.selector);
+        assertEq(logs[0].topics[0], TopPay.PaymentSkipped.selector);
+        assertEq(logs[1].topics[0], TopPay.BatchSent.selector);
     }
 
     // ---------- gas bounds ----------
 
     function test_BestEffort_InvalidGasLimitTooLow() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidGasLimit.selector, 29_999));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidGasLimit.selector, 29_999));
         arc.sendBatchBestEffort{value: 1 ether}(_t1(bob), _a1(1 ether), _m(1), 29_999);
     }
 
     function test_BestEffort_InvalidGasLimitTooHigh() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidGasLimit.selector, 500_001));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidGasLimit.selector, 500_001));
         arc.sendBatchBestEffort{value: 1 ether}(_t1(bob), _a1(1 ether), _m(1), 500_001);
     }
 
     function test_BestEffort_InvalidGasLimitZero() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidGasLimit.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidGasLimit.selector, 0));
         arc.sendBatchBestEffort{value: 1 ether}(_t1(bob), _a1(1 ether), _m(1), 0);
     }
 
@@ -137,14 +137,14 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
     function test_BestEffort_InsufficientGasReverts() public {
         uint256 a = alice.balance;
         vm.prank(alice);
-        vm.expectPartialRevert(ArcSend.InsufficientGas.selector);
+        vm.expectPartialRevert(TopPay.InsufficientGas.selector);
         arc.sendBatchBestEffort{value: 1 ether, gas: 60_000}(_t1(bob), _a1(1 ether), _m(1), 30_000);
         assertEq(alice.balance, a);
     }
 
     function test_BestEffort_InsufficientGasForLargeAllowance() public {
         vm.prank(alice);
-        vm.expectPartialRevert(ArcSend.InsufficientGas.selector);
+        vm.expectPartialRevert(TopPay.InsufficientGas.selector);
         arc.sendBatchBestEffort{value: 1 ether, gas: 400_000}(_t1(bob), _a1(1 ether), _m(1), 500_000);
     }
 
@@ -162,7 +162,7 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
         uint256 a = alice.balance;
 
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.PaymentSkipped(alice, address(burner), 2 ether, bytes32(uint256(2)));
+        emit TopPay.PaymentSkipped(alice, address(burner), 2 ether, bytes32(uint256(2)));
 
         vm.prank(alice);
         uint256 refunded = arc.sendBatchBestEffort{value: 6 ether}(
@@ -180,25 +180,25 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
 
     function test_BestEffort_RevertsIncorrectValue() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 2 ether, 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 2 ether, 3 ether));
         arc.sendBatchBestEffort{value: 2 ether}(_t2(bob, carol), _a2(1 ether, 2 ether), _m(2), G);
     }
 
     function test_BestEffort_RevertsLengthMismatch() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.LengthMismatch.selector, 2, 1, 2));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.LengthMismatch.selector, 2, 1, 2));
         arc.sendBatchBestEffort{value: 1 ether}(_t2(bob, carol), _a1(1 ether), _m(2), G);
     }
 
     function test_BestEffort_RevertsEmptyBatch() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.EmptyBatch.selector);
+        vm.expectRevert(TopPay.EmptyBatch.selector);
         arc.sendBatchBestEffort(new address payable[](0), new uint256[](0), new bytes32[](0), G);
     }
 
     function test_BestEffort_RevertsBatchTooLarge() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.BatchTooLarge.selector, 101));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.BatchTooLarge.selector, 101));
         arc.sendBatchBestEffort{value: 101 ether}(_fresh(101), _same(101, 1 ether), _m(101), G);
     }
 
@@ -213,19 +213,19 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
 
     function test_BestEffort_RevertsZeroAddressItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAddress.selector);
+        vm.expectRevert(TopPay.ZeroAddress.selector);
         arc.sendBatchBestEffort{value: 2 ether}(_t2(bob, address(0)), _a2(1 ether, 1 ether), _m(2), G);
     }
 
     function test_BestEffort_RevertsSelfTargetItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.SelfTarget.selector);
+        vm.expectRevert(TopPay.SelfTarget.selector);
         arc.sendBatchBestEffort{value: 2 ether}(_t2(bob, address(arc)), _a2(1 ether, 1 ether), _m(2), G);
     }
 
     function test_BestEffort_RevertsZeroAmountItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAmount.selector);
+        vm.expectRevert(TopPay.ZeroAmount.selector);
         arc.sendBatchBestEffort{value: 1 ether}(_t2(bob, carol), _a2(1 ether, 0), _m(2), G);
     }
 
@@ -239,7 +239,7 @@ contract ArcSendBestEffortTest is ArcSendTestBase {
         uint256 sBal = address(s).balance;
 
         vm.recordLogs();
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(s), 2 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(s), 2 ether));
         s.go{value: 3 ether}(arc, _t2(bob, address(rej)), _a2(1 ether, 2 ether), _m(2), G);
 
         assertEq(bob.balance, b, "earlier success rolled back");

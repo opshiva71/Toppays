@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {ArcSend} from "../ArcSend.sol";
+import {TopPay} from "../TopPay.sol";
 
-/// Drives bounded random actions against ArcSend and tracks ghost accounting.
-contract ArcSendHandler is Test {
-    ArcSend public arc;
+/// Drives bounded random actions against TopPay and tracks ghost accounting.
+contract TopPayHandler is Test {
+    TopPay public arc;
 
     address[] public actors; // fund-holding participants (EOAs)
     address[] public sinks; // pure recipients of send/sendBatch
@@ -21,7 +21,7 @@ contract ArcSendHandler is Test {
     uint256[] public requestIds;
     mapping(uint256 => bool) public paidSeen;
 
-    constructor(ArcSend _arc) {
+    constructor(TopPay _arc) {
         arc = _arc;
         for (uint256 i; i < 5; i++) {
             address a = makeAddr(string.concat("actor", vm.toString(i)));
@@ -109,7 +109,7 @@ contract ArcSendHandler is Test {
     function payRequest(uint256 who, uint256 idSeed) external {
         if (requestIds.length == 0) return;
         uint256 id = requestIds[idSeed % requestIds.length];
-        ArcSend.Request memory r = arc.getRequest(id);
+        TopPay.Request memory r = arc.getRequest(id);
         address payer = _actor(who);
         if (payer == r.payee) payer = _actor(who + 1);
         if (r.status != 1) {
@@ -130,7 +130,7 @@ contract ArcSendHandler is Test {
     function cancelRequest(uint256 idSeed) external {
         if (requestIds.length == 0) return;
         uint256 id = requestIds[idSeed % requestIds.length];
-        ArcSend.Request memory r = arc.getRequest(id);
+        TopPay.Request memory r = arc.getRequest(id);
         if (r.status != 1) return;
         vm.prank(r.payee);
         arc.cancelRequest(id);
@@ -149,7 +149,7 @@ contract ArcSendHandler is Test {
         ghostOpenEscrow += amount;
     }
 
-    function _openEscrow(uint256 idSeed) internal view returns (bool ok, uint256 id, ArcSend.Escrow memory e) {
+    function _openEscrow(uint256 idSeed) internal view returns (bool ok, uint256 id, TopPay.Escrow memory e) {
         uint256 next = arc.nextEscrowId();
         if (next == 1) return (false, 0, e);
         id = bound(idSeed, 1, next - 1);
@@ -159,7 +159,7 @@ contract ArcSendHandler is Test {
 
     /// Payer redirects the refund to another participant (actors only, so sink accounting stays exact).
     function setEscrowRefundAddress(uint256 idSeed, uint256 to) external {
-        (bool ok, uint256 id, ArcSend.Escrow memory e) = _openEscrow(idSeed);
+        (bool ok, uint256 id, TopPay.Escrow memory e) = _openEscrow(idSeed);
         if (!ok) return;
         address dest = _actor(to);
         vm.prank(e.payer);
@@ -169,7 +169,7 @@ contract ArcSendHandler is Test {
     }
 
     function releaseEscrow(uint256 idSeed) external {
-        (bool ok, uint256 id, ArcSend.Escrow memory e) = _openEscrow(idSeed);
+        (bool ok, uint256 id, TopPay.Escrow memory e) = _openEscrow(idSeed);
         if (!ok) return;
         vm.prank(e.payer);
         arc.releaseEscrow(id);
@@ -177,7 +177,7 @@ contract ArcSendHandler is Test {
     }
 
     function refundEscrow(uint256 idSeed) external {
-        (bool ok, uint256 id, ArcSend.Escrow memory e) = _openEscrow(idSeed);
+        (bool ok, uint256 id, TopPay.Escrow memory e) = _openEscrow(idSeed);
         if (!ok) return;
         vm.prank(e.payee);
         arc.refundEscrow(id);
@@ -185,7 +185,7 @@ contract ArcSendHandler is Test {
     }
 
     function reclaimEscrow(uint256 idSeed) external {
-        (bool ok, uint256 id, ArcSend.Escrow memory e) = _openEscrow(idSeed);
+        (bool ok, uint256 id, TopPay.Escrow memory e) = _openEscrow(idSeed);
         if (!ok || block.timestamp <= e.deadline) return;
         vm.prank(e.payer);
         arc.reclaimEscrow(id);
@@ -204,15 +204,15 @@ contract ArcSendHandler is Test {
     }
 }
 
-contract ArcSendInvariantTest is Test {
-    ArcSend internal arc;
-    ArcSendHandler internal handler;
+contract TopPayInvariantTest is Test {
+    TopPay internal arc;
+    TopPayHandler internal handler;
     uint256 internal initialActorTotal;
 
     function setUp() public {
         vm.warp(1_700_000_000);
-        arc = new ArcSend();
-        handler = new ArcSendHandler(arc);
+        arc = new TopPay();
+        handler = new TopPayHandler(arc);
         initialActorTotal = handler.actorsTotal();
         // Fuzzed callers must never be the funded participants (forge resets/uses sender accounts).
         for (uint256 i; i < 5; i++) excludeSender(handler.actors(i));
@@ -224,7 +224,7 @@ contract ArcSendInvariantTest is Test {
     function _onChainOpenSum() internal view returns (uint256 s) {
         uint256 next = arc.nextEscrowId();
         for (uint256 id = 1; id < next; id++) {
-            ArcSend.Escrow memory e = arc.getEscrow(id);
+            TopPay.Escrow memory e = arc.getEscrow(id);
             if (e.status == 1) s += e.amount;
         }
     }
@@ -267,11 +267,11 @@ contract ArcSendInvariantTest is Test {
         );
     }
 
-    /// Every open escrow always has a usable refund destination (never zero, never ArcSend itself).
+    /// Every open escrow always has a usable refund destination (never zero, never TopPay itself).
     function invariant_OpenEscrowsHaveValidRefundTo() public view {
         uint256 next = arc.nextEscrowId();
         for (uint256 id = 1; id < next; id++) {
-            ArcSend.Escrow memory e = arc.getEscrow(id);
+            TopPay.Escrow memory e = arc.getEscrow(id);
             if (e.status == 1) {
                 assertTrue(e.refundTo != address(0));
                 assertTrue(e.refundTo != address(arc));

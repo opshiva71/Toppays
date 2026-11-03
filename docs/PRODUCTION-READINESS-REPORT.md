@@ -2,13 +2,13 @@
 
 Date: 2026-11-01. Target: Arc Mainnet (chain ID 5042). No contract was deployed and no funds were sent during this review.
 
-> The optional payments contract keeps its original name, **ArcSend**. It is now version 2 (onchain identifier `ArcSend.v2`): single and batch payments, payment requests and escrow. Version 1 was never deployed. The `VITE_ARCSEND_CONTRACT_ADDRESS` variable is unchanged.
+> The optional payments contract is now named **TopPay** (`contracts/TopPay.sol`, previously `ArcSend.sol`). Behavior and security protections are unchanged. It is version 2: single and batch payments, payment requests and escrow. Its onchain identifier is deliberately still `keccak256("ArcSend.v2")`, so a contract already deployed from the old source stays recognized by the app. Version 1 was never deployed. The address variable is now `VITE_TOPPAY_CONTRACT_ADDRESS`; the old `VITE_ARCSEND_CONTRACT_ADDRESS` is still read if the new one is empty.
 
-> This report covers the app and the original (v1) receipt helper. ArcSend v2 was written, reviewed and tested afterwards; see `contracts/ArcSend-design.md` and `docs/DEPLOYMENT.md`.
+> This report covers the app and the original (v1) receipt helper. TopPay v2 was written, reviewed and tested afterwards; see `contracts/TopPay-design.md` and `docs/DEPLOYMENT.md`.
 
 ## Verdict
 
-**Ready for a controlled mainnet launch of the app**, subject to the manual steps in "Still on you" below. The payment path is native USDC transfers from the user's own wallet; the optional ArcSend contract is not deployed and not required.
+**Ready for a controlled mainnet launch of the app**, subject to the manual steps in "Still on you" below. The payment path is native USDC transfers from the user's own wallet; the optional TopPay contract is not deployed and not required.
 
 ## Results by requirement
 
@@ -27,7 +27,7 @@ Date: 2026-11-01. Target: Arc Mainnet (chain ID 5042). No contract was deployed 
 
 ## Security
 
-**Contract (`contracts/ArcSend.sol`, optional)**
+**Contract (`contracts/TopPay.sol`, optional)**
 - Maximum-depth review found two low findings; both fixed: the receipt event is now emitted before the external call (a re-entering recipient can no longer reorder receipts), and `TransferFailed` now carries the recipient and amount. Pragma pinned to exactly 0.8.28.
 - Re-review after the fixes: no findings. Static analysis: informational only (a low-level call that is intentional, and the pragma note that the pin resolves).
 - 32 Foundry tests pass (unit, fuzz, and two invariants: the contract never holds funds, and all forwarded value reaches the recipient).
@@ -67,5 +67,5 @@ Date: 2026-11-01. Target: Arc Mainnet (chain ID 5042). No contract was deployed 
 1. **A real send.** Signing needs a wallet, and no funds were sent. Do a 0.01 USDC send between two wallets you own and watch it reach "Payment confirmed" before launch.
 2. **Real MetaMask UI.** Tested with a scripted wallet, not the extension's own prompts.
 3. **Production RPC capacity.** The public endpoint rate-limits. Set `VITE_ARC_RPC_URL` to a dedicated provider before real traffic.
-4. **Optional contract.** Deploy it yourself only if you want memo receipts, then set `VITE_ARCSEND_CONTRACT_ADDRESS` and confirm the Network panel shows "verified". Consider an independent paid audit if value will flow through it.
+4. **Optional contract.** Deploy it yourself only if you want memo receipts, then set `VITE_TOPPAY_CONTRACT_ADDRESS` and confirm the Network panel shows "verified". Consider an independent paid audit if value will flow through it.
 5. **Reverted sends are not in history.** Only the send flow reports them.

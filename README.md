@@ -6,7 +6,7 @@ Built with [Arc Studio](https://studio.arc.io)
 
 > Arc Mainnet moves real USDC and transactions cannot be reversed. Test with small amounts, and review the code and any contract you deploy before relying on it.
 
-> The optional payments contract keeps its original name, **ArcSend**. It is now version 2 (onchain identifier `ArcSend.v2`): single and batch payments, payment requests and escrow. Version 1 was never deployed. The `VITE_ARCSEND_CONTRACT_ADDRESS` variable is unchanged.
+> The optional payments contract is now named **TopPay** (`contracts/TopPay.sol`, previously `ArcSend.sol`). Behavior and security protections are unchanged. It is version 2: single and batch payments, payment requests and escrow. Its onchain identifier is deliberately still `keccak256("ArcSend.v2")`, so a contract already deployed from the old source stays recognized by the app. Version 1 was never deployed. The address variable is now `VITE_TOPPAY_CONTRACT_ADDRESS`; the old `VITE_ARCSEND_CONTRACT_ADDRESS` is still read if the new one is empty.
 
 ## Features
 
@@ -28,8 +28,8 @@ React, TypeScript, Vite, Tailwind CSS, wagmi and viem, qrcode.react, framer-moti
 - `config/network.ts`: Arc Mainnet chain, RPC list, explorer and fee settings
 - `config/contract.ts`, `config/abi.ts`: optional contract address and ABI
 - `src/`: app code (`components/`, `pages/`, `hooks/`, `services/`)
-- `contracts/ArcSend.sol`: optional receipt helper contract
-- `scripts/deploy-arcsend.ts`: deploys the contract from your own wallet
+- `contracts/TopPay.sol`: optional receipt helper contract
+- `scripts/deploy-toppay.ts`: deploys the contract from your own wallet
 - `scripts/verify-mainnet.ts`: read-only production checks (no funds, no keys)
 - `docs/UNISWAP.md`: swap setup, security model and testing
 - `docs/PRODUCTION.md`: production hosting guide and checklist
@@ -59,10 +59,10 @@ All are optional. See `config/env.example`.
 
 | Name | Purpose |
 | --- | --- |
-| `VITE_ARCSEND_CONTRACT_ADDRESS` | Address of a deployed ArcSend contract |
+| `VITE_TOPPAY_CONTRACT_ADDRESS` | Address of a deployed TopPay contract |
 | `VITE_ARC_RPC_URL` | Your own Arc Mainnet RPC (https), tried first |
 | `VITE_ARC_RPC_FALLBACK_URLS` | Comma separated backup RPCs (https) |
 | `VITE_HISTORY_CHUNK_BLOCKS` | Blocks per history request |
-| `DEPLOYER_PRIVATE_KEY` | Only for `bun run deploy:arcsend`; set in your shell, never commit it |
+| `DEPLOYER_PRIVATE_KEY` | Only for `bun run deploy:toppay`; set in your shell, never commit it |
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for contract and app deployment.

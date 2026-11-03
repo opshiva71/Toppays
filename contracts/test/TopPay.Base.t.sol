@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {ArcSend} from "../ArcSend.sol";
+import {TopPay} from "../TopPay.sol";
 
 /// @dev Accepts native funds.
 contract Acceptor {
@@ -33,7 +33,7 @@ contract GasBurner {
 }
 
 /// @dev Re-enters a target on receive. `propagate` bubbles the inner revert, otherwise it is swallowed.
-///      Also acts as a generic caller (`exec`) so it can be payer/payee/requester of ArcSend objects.
+///      Also acts as a generic caller (`exec`) so it can be payer/payee/requester of TopPay objects.
 contract Reentrant {
     address public target;
     bytes public data;
@@ -80,7 +80,7 @@ contract Reentrant {
 /// @dev Calls sendBatchBestEffort but has no receive(), so it cannot take the refund.
 contract NoRefundSender {
     function go(
-        ArcSend a,
+        TopPay a,
         address payable[] calldata tos,
         uint256[] calldata amounts,
         bytes32[] calldata memos,
@@ -90,8 +90,8 @@ contract NoRefundSender {
     }
 }
 
-abstract contract ArcSendTestBase is Test {
-    ArcSend internal arc;
+abstract contract TopPayTestBase is Test {
+    TopPay internal arc;
 
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
@@ -103,7 +103,7 @@ abstract contract ArcSendTestBase is Test {
 
     function setUp() public virtual {
         vm.warp(T0);
-        arc = new ArcSend();
+        arc = new TopPay();
         vm.deal(alice, 1_000 ether);
         vm.deal(bob, 1_000 ether);
         vm.deal(carol, 1_000 ether);

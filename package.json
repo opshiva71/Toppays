@@ -11,7 +11,7 @@
     "lint": "oxlint --type-aware src scripts --fix; s=$?; oxlint --fix .; exit $((s>0?s:$?))",
     "typecheck": "tsc --noEmit",
     "check": "bash scripts/check.sh",
-    "deploy:arcsend": "bun run ./scripts/deploy-arcsend.ts",
+    "deploy:toppay": "bun run ./scripts/deploy-toppay.ts",
     "verify:mainnet": "bun run ./scripts/verify-mainnet.ts",
     "build": "vite build",
     "verify:uniswap": "bun run ./scripts/verify-uniswap.ts",

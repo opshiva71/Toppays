@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ArcSend} from "../ArcSend.sol";
-import {ArcSendTestBase, Rejecter} from "./ArcSend.Base.t.sol";
+import {TopPay} from "../TopPay.sol";
+import {TopPayTestBase, Rejecter} from "./TopPay.Base.t.sol";
 
-contract ArcSendFuzzTest is ArcSendTestBase {
+contract TopPayFuzzTest is TopPayTestBase {
     /// @dev Reject precompiles, cheatcode/console addresses, contracts and the actors.
     function _eoa(address a) internal view returns (address) {
         uint256 v = bound(uint256(uint160(a)), 0x100000, type(uint160).max);
@@ -25,7 +25,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 aBefore = alice.balance;
 
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, to, amount, memo);
+        emit TopPay.Payment(alice, to, amount, memo);
         vm.prank(alice);
         arc.send{value: amount}(payable(to), memo);
 
@@ -39,7 +39,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         Rejecter rej = new Rejecter();
         uint256 aBefore = alice.balance;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rej), amount));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rej), amount));
         arc.send{value: amount}(payable(address(rej)), MEMO);
         assertEq(alice.balance, aBefore);
     }
@@ -58,7 +58,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 aBefore = alice.balance;
 
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, total, n);
+        emit TopPay.BatchSent(alice, total, n);
         vm.prank(alice);
         arc.sendBatch{value: total}(tos, amts, _m(n));
 
@@ -79,7 +79,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 supplied = delta % 2 == 0 ? total + delta : total - (delta % total);
         vm.assume(supplied != total);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, supplied, total));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, supplied, total));
         arc.sendBatch{value: supplied}(_fresh(n), _same(n, 1 ether), _m(n));
     }
 
@@ -114,7 +114,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 aBefore = alice.balance;
 
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, total - expectedRefund, n - _popcount(mask, n));
+        emit TopPay.BatchSent(alice, total - expectedRefund, n - _popcount(mask, n));
         vm.prank(alice);
         uint256 refunded = arc.sendBatchBestEffort{value: total}(tos, amts, _m(n), 50_000);
 
@@ -127,7 +127,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
     function testFuzz_BestEffort_GasLimitValidity(uint256 g) public {
         vm.prank(alice);
         if (g < 30_000 || g > 500_000) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidGasLimit.selector, g));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidGasLimit.selector, g));
         }
         arc.sendBatchBestEffort{value: 1 ether}(_t1(bob), _a1(1 ether), _m(1), g);
     }
@@ -139,7 +139,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint64 deadline = uint64(T0 + delta);
         vm.prank(alice);
         if (delta < 1 hours || delta > 365 days) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidDeadline.selector, deadline));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidDeadline.selector, deadline));
             arc.createEscrow{value: 1 ether}(bob, deadline, MEMO);
         } else {
             uint256 id = arc.createEscrow{value: 1 ether}(bob, deadline, MEMO);
@@ -156,7 +156,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         vm.warp(warpTo);
         vm.prank(alice);
         if (warpTo <= deadline) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.DeadlineNotPassed.selector, id, uint64(deadline)));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.DeadlineNotPassed.selector, id, uint64(deadline)));
             arc.reclaimEscrow(id);
             assertEq(address(arc).balance, 2 ether);
         } else {
@@ -183,9 +183,9 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         vm.deal(alice, amount);
         vm.prank(alice);
         if (amount == 0) {
-            vm.expectRevert(ArcSend.ZeroAmount.selector);
+            vm.expectRevert(TopPay.ZeroAmount.selector);
         } else if (amount > type(uint96).max) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.AmountTooLarge.selector, amount));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.AmountTooLarge.selector, amount));
         }
         arc.createEscrow{value: amount}(bob, uint64(T0 + 1 days), MEMO);
     }
@@ -199,7 +199,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 id = _mkEscrow(alice, bob, amount, 1 days);
 
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefundAddressSet(id, dest);
+        emit TopPay.EscrowRefundAddressSet(id, dest);
         vm.prank(alice);
         arc.setEscrowRefundAddress(id, dest);
         assertEq(arc.getEscrow(id).refundTo, dest);
@@ -212,7 +212,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         if (mode == 0) {
             // payee-initiated refund
             vm.expectEmit(true, true, false, true, address(arc));
-            emit ArcSend.EscrowRefunded(id, alice, amount, dest);
+            emit TopPay.EscrowRefunded(id, alice, amount, dest);
             vm.prank(bob);
             arc.refundEscrow(id);
             assertEq(dest.balance, dBefore + amount);
@@ -223,7 +223,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
             // payer reclaim after deadline
             vm.warp(T0 + 1 days + 1);
             vm.expectEmit(true, true, false, true, address(arc));
-            emit ArcSend.EscrowReclaimed(id, alice, amount, dest);
+            emit TopPay.EscrowReclaimed(id, alice, amount, dest);
             vm.prank(alice);
             arc.reclaimEscrow(id);
             assertEq(dest.balance, dBefore + amount);
@@ -245,11 +245,11 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         vm.assume(caller != address(vm));
         vm.prank(caller);
         if (caller != alice) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayer.selector, id, caller));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayer.selector, id, caller));
         } else if (dest == address(0)) {
-            vm.expectRevert(ArcSend.ZeroAddress.selector);
+            vm.expectRevert(TopPay.ZeroAddress.selector);
         } else if (dest == address(arc)) {
-            vm.expectRevert(ArcSend.SelfTarget.selector);
+            vm.expectRevert(TopPay.SelfTarget.selector);
         }
         arc.setEscrowRefundAddress(id, dest);
         if (caller == alice && dest != address(0) && dest != address(arc)) {
@@ -266,9 +266,9 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         if (amount % 3 == 0) amount = bound(amount, 0, uint256(type(uint96).max) + 5);
         vm.prank(alice);
         if (amount == 0) {
-            vm.expectRevert(ArcSend.ZeroAmount.selector);
+            vm.expectRevert(TopPay.ZeroAmount.selector);
         } else if (amount > type(uint96).max) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.AmountTooLarge.selector, amount));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.AmountTooLarge.selector, amount));
         }
         arc.createRequest(bob, amount, 0, MEMO);
     }
@@ -280,7 +280,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         uint256 aBefore = alice.balance;
         vm.prank(bob);
         if (supplied != amount) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, supplied, amount));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, supplied, amount));
             arc.payRequest{value: supplied}(id);
             assertEq(arc.getRequest(id).status, 1);
         } else {
@@ -299,7 +299,7 @@ contract ArcSendFuzzTest is ArcSendTestBase {
         vm.warp(T0 + payDelta);
         vm.prank(bob);
         if (T0 + payDelta > exp) {
-            vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestExpired.selector, id, exp));
+            vm.expectRevert(abi.encodeWithSelector(TopPay.RequestExpired.selector, id, exp));
         }
         arc.payRequest{value: 1 ether}(id);
     }

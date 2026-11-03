@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ArcSend} from "../ArcSend.sol";
-import {ArcSendTestBase, Rejecter, NoReceive} from "./ArcSend.Base.t.sol";
+import {TopPay} from "../TopPay.sol";
+import {TopPayTestBase, Rejecter, NoReceive} from "./TopPay.Base.t.sol";
 
 /// createRequest / payRequest / cancelRequest
-contract ArcSendRequestTest is ArcSendTestBase {
+contract TopPayRequestTest is TopPayTestBase {
     uint8 internal constant OPEN = 1;
     uint8 internal constant PAID = 2;
     uint8 internal constant CANCELLED = 3;
@@ -19,7 +19,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         assertEq(id, 1);
         assertEq(arc.nextRequestId(), 2);
 
-        ArcSend.Request memory r = arc.getRequest(id);
+        TopPay.Request memory r = arc.getRequest(id);
         assertEq(r.payee, alice);
         assertEq(r.payer, bob);
         assertEq(r.amount, 5 ether);
@@ -34,28 +34,28 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_CreateRequest_EmitsRequestCreated() public {
         uint64 exp = uint64(T0 + 1 days);
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.RequestCreated(1, alice, bob, 5 ether, exp, MEMO);
+        emit TopPay.RequestCreated(1, alice, bob, 5 ether, exp, MEMO);
         vm.prank(alice);
         arc.createRequest(bob, 5 ether, exp, MEMO);
     }
 
     function test_CreateRequest_ZeroPayerAndZeroExpiryAllowed() public {
         uint256 id = _mkRequest(alice, address(0), 1 ether, 0);
-        ArcSend.Request memory r = arc.getRequest(id);
+        TopPay.Request memory r = arc.getRequest(id);
         assertEq(r.payer, address(0));
         assertEq(r.expiry, 0);
     }
 
     function test_CreateRequest_RevertsZeroAmount() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAmount.selector);
+        vm.expectRevert(TopPay.ZeroAmount.selector);
         arc.createRequest(bob, 0, 0, MEMO);
     }
 
     function test_CreateRequest_RevertsAmountTooLarge() public {
         uint256 tooBig = uint256(type(uint96).max) + 1;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.AmountTooLarge.selector, tooBig));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.AmountTooLarge.selector, tooBig));
         arc.createRequest(bob, tooBig, 0, MEMO);
     }
 
@@ -67,7 +67,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_CreateRequest_RevertsInvalidExpiryPast() public {
         uint64 past = uint64(T0 - 1);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.InvalidExpiry.selector, past));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.InvalidExpiry.selector, past));
         arc.createRequest(bob, 1 ether, past, MEMO);
     }
 
@@ -78,7 +78,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
 
     function test_CreateRequest_RevertsSelfPayer() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.SelfTarget.selector);
+        vm.expectRevert(TopPay.SelfTarget.selector);
         arc.createRequest(alice, 1 ether, 0, MEMO);
     }
 
@@ -108,9 +108,9 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_PayRequest_EmitsRequestPaidThenPayment() public {
         uint256 id = _mkRequest(alice, bob, 4 ether, 0);
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.RequestPaid(id, bob, alice, 4 ether);
+        emit TopPay.RequestPaid(id, bob, alice, 4 ether);
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(bob, alice, 4 ether, MEMO);
+        emit TopPay.Payment(bob, alice, 4 ether, MEMO);
         vm.prank(bob);
         arc.payRequest{value: 4 ether}(id);
     }
@@ -118,7 +118,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_PayRequest_RevertsNotPayer() public {
         uint256 id = _mkRequest(alice, bob, 4 ether, 0);
         vm.prank(carol);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayer.selector, id, carol));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayer.selector, id, carol));
         arc.payRequest{value: 4 ether}(id);
         assertEq(arc.getRequest(id).status, OPEN);
     }
@@ -126,14 +126,14 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_PayRequest_RevertsIncorrectValueLow() public {
         uint256 id = _mkRequest(alice, address(0), 4 ether, 0);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 4 ether - 1, 4 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 4 ether - 1, 4 ether));
         arc.payRequest{value: 4 ether - 1}(id);
     }
 
     function test_PayRequest_RevertsIncorrectValueHigh() public {
         uint256 id = _mkRequest(alice, address(0), 4 ether, 0);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 4 ether + 1, 4 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 4 ether + 1, 4 ether));
         arc.payRequest{value: 4 ether + 1}(id);
     }
 
@@ -151,7 +151,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         uint256 id = _mkRequest(alice, address(0), 1 ether, exp);
         vm.warp(uint256(exp) + 1);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestExpired.selector, id, exp));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestExpired.selector, id, exp));
         arc.payRequest{value: 1 ether}(id);
     }
 
@@ -168,13 +168,13 @@ contract ArcSendRequestTest is ArcSendTestBase {
         vm.prank(bob);
         arc.payRequest{value: 1 ether}(id);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, id));
         arc.payRequest{value: 1 ether}(id);
     }
 
     function test_PayRequest_UnknownIdRevertsNotOpen() public {
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, 99));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, 99));
         arc.payRequest{value: 1 ether}(99);
     }
 
@@ -183,7 +183,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         uint256 id = _mkRequest(address(rej), address(0), 1 ether, 0);
         uint256 b = bob.balance;
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rej), 1 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rej), 1 ether));
         arc.payRequest{value: 1 ether}(id);
         assertEq(arc.getRequest(id).status, OPEN);
         assertEq(bob.balance, b);
@@ -194,7 +194,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         NoReceive nr = new NoReceive();
         uint256 id = _mkRequest(address(nr), address(0), 1 ether, 0);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(nr), 1 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(nr), 1 ether));
         arc.payRequest{value: 1 ether}(id);
         assertEq(arc.getRequest(id).status, OPEN);
     }
@@ -204,7 +204,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_CancelRequest_ByPayee() public {
         uint256 id = _mkRequest(alice, bob, 1 ether, 0);
         vm.expectEmit(true, true, false, false, address(arc));
-        emit ArcSend.RequestCancelled(id, alice);
+        emit TopPay.RequestCancelled(id, alice);
         vm.prank(alice);
         arc.cancelRequest(id);
         assertEq(arc.getRequest(id).status, CANCELLED);
@@ -213,7 +213,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
     function test_CancelRequest_RevertsNotPayee() public {
         uint256 id = _mkRequest(alice, bob, 1 ether, 0);
         vm.prank(bob); // the payer is not the payee
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayee.selector, id, bob));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayee.selector, id, bob));
         arc.cancelRequest(id);
         assertEq(arc.getRequest(id).status, OPEN);
     }
@@ -223,7 +223,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         vm.prank(alice);
         arc.cancelRequest(id);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, id));
         arc.cancelRequest(id);
     }
 
@@ -232,13 +232,13 @@ contract ArcSendRequestTest is ArcSendTestBase {
         vm.prank(bob);
         arc.payRequest{value: 1 ether}(id);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, id));
         arc.cancelRequest(id);
     }
 
     function test_CancelRequest_UnknownId() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, 42));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, 42));
         arc.cancelRequest(42);
     }
 
@@ -256,7 +256,7 @@ contract ArcSendRequestTest is ArcSendTestBase {
         vm.prank(alice);
         arc.cancelRequest(id);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.RequestNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.RequestNotOpen.selector, id));
         arc.payRequest{value: 1 ether}(id);
     }
 }

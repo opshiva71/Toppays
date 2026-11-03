@@ -26,7 +26,7 @@ Everything has a safe default. Set variables in your host's environment settings
 | --- | --- |
 | `VITE_ARC_RPC_URL` | Dedicated Arc Mainnet RPC (https), tried first. Recommended for production traffic. |
 | `VITE_ARC_RPC_FALLBACK_URLS` | Comma separated backup RPCs (https). |
-| `VITE_ARCSEND_CONTRACT_ADDRESS` | Optional deployed ArcSend contract. Leave empty if you have not deployed one. |
+| `VITE_TOPPAY_CONTRACT_ADDRESS` | Optional deployed TopPay contract. Leave empty if you have not deployed one. |
 | `VITE_HISTORY_CHUNK_BLOCKS` | Blocks per history request (default 5000). |
 
 Chain, RPC list and fee settings live in `config/network.ts`. Never put a private key, API key or deployer credential in any `VITE_` variable.
@@ -49,7 +49,7 @@ If you set a custom RPC, add its origin to `connect-src` in the Content-Security
 - **Fee floor:** Arc silently drops transactions with `maxFeePerGas` under 20 gwei. The app enforces the floor on every send.
 - **Finality:** Arc finality is immediate, so one block inclusion is final. The app still waits for a successful receipt before showing success.
 - **Stuck status:** if a payment shows "Not confirmed yet", the app never resubmits. Check the transaction hash on the explorer; do not send again until you know it did not land.
-- **Updating the contract address:** change `VITE_ARCSEND_CONTRACT_ADDRESS` and rebuild.
+- **Updating the contract address:** change `VITE_TOPPAY_CONTRACT_ADDRESS` and rebuild.
 
 ## 5. Security checklist
 
@@ -57,7 +57,7 @@ If you set a custom RPC, add its origin to `connect-src` in the Content-Security
 - [ ] Manual 0.01 USDC test completed on mainnet from your own wallet
 - [ ] Hosted over HTTPS with the security headers applied
 - [ ] No secrets in `VITE_` variables or committed files (`.env` is git-ignored)
-- [ ] If you deploy the contract: deployed from a dedicated wallet, address verified onchain, `VITE_ARCSEND_CONTRACT_ADDRESS` set, and the app's Network panel shows "verified"
+- [ ] If you deploy the contract: deployed from a dedicated wallet, address verified onchain, `VITE_TOPPAY_CONTRACT_ADDRESS` set, and the app's Network panel shows "verified"
 - [ ] Dependencies reviewed with `bun audit` (see known items below)
 - [ ] An independent professional audit if you route significant value through the contract
 
@@ -68,4 +68,4 @@ If you set a custom RPC, add its origin to `connect-src` in the Content-Security
 - `bun audit` reports advisories in transitive dependencies of wagmi (WalletConnect, zod, uuid) and of the Circle SDK used only by optional deployment scripts. None are on the payment path, but re-check with `bun audit` and update before each release.
 - **RPC reliability.** The public endpoint rate-limits bursts. TopPay smooths its requests, skips an endpoint for a while after it rate-limits, and falls back to the official Blockdaemon endpoint from the Arc docs (only after it proves it is chain 5042). Add more with `VITE_ARC_RPC_FALLBACK_URLS`, or put a dedicated provider first with `VITE_ARC_RPC_URL`; both must be https and added to the Content-Security-Policy `connect-src` (and `public/_headers` / `vercel.json`) because the browser calls them directly. The shipped CSP already allows `https://rpc.blockdaemon.mainnet.arc.io`.
 - **Swap** uses Uniswap V3 directly over the Arc RPC (no API key, no backend), so it works on any static host. Quotes are live and can change before you confirm; liquidity in some pools is thin, so check price impact.
-- The optional ArcSend contract has no admin and cannot recover native funds forced into it by other means.
+- The optional TopPay contract has no admin and cannot recover native funds forced into it by other means.

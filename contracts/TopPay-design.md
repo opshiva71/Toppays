@@ -1,8 +1,8 @@
-# ArcSend v2 design
+# TopPay v2 design
 
 
 > **As built (supersedes any conflicting text below).** The security review changed five things:
-> 1. Every external function carries `nonReentrant`, including `send` and `sendBatch`. A recipient that calls back into ArcSend fails safely with `ReentrantCall` and the sender keeps the funds.
+> 1. Every external function carries `nonReentrant`, including `send` and `sendBatch`. A recipient that calls back into TopPay fails safely with `ReentrantCall` and the sender keeps the funds.
 > 2. New `sendBatchBestEffort(tos, amounts, memos, gasPerRecipient)` skips recipients that cannot receive (emits `PaymentSkipped`) and refunds their amount to the sender in the same transaction. Each recipient gets at most `gasPerRecipient` gas (30,000 to 500,000) and the call reverts with `InsufficientGas` if the transaction does not carry enough gas, so a gas-burning recipient cannot fail the batch. `sendBatch` stays all-or-nothing.
 > 3. Escrow has a payer-controlled `refundTo` (default: the payer). `setEscrowRefundAddress` lets the payer redirect refunds while the escrow is open. `refundEscrow` and `reclaimEscrow` pay `refundTo`.
 > 4. Errors carry context (IDs, callers, supplied and expected values).
@@ -13,7 +13,7 @@
 - Status: Draft, awaiting owner confirmation
 - Target chain: Arc Mainnet (chain ID 5042). Native gas token is USDC (18 decimals natively, 6 in the ERC-20 view)
 - Language and toolchain: Solidity 0.8.28 (checked arithmetic, custom errors), Foundry, EVM target `cancun`, deployed by the owner through Remix
-- Identifier: `keccak256("ArcSend.v2")`. v1 was never deployed, so v2 replaces it with no migration
+- Identifier: `keccak256("ArcSend.v2")` (a tag frozen at the contract's original name; the contract is now called TopPay). v1 was never deployed, so v2 replaces it with no migration
 - Reviews: [ ] Design (owner), [ ] Security (automated review at maximum depth, plus an independent paid audit before large value)
 
 ## 2. Action items
@@ -91,7 +91,7 @@ No token standard is implemented. The contract only moves the native coin via `c
 
 ```mermaid
 flowchart LR
-  P[Payer wallet] -- send / sendBatch / payRequest --> C[ArcSend]
+  P[Payer wallet] -- send / sendBatch / payRequest --> C[TopPay]
   C -- same tx --> R[Recipient]
   P -- createEscrow --> C
   C -- release / refund / reclaim --> R
@@ -154,7 +154,7 @@ No constructor and no initialization. The deployer has no special power after de
 
 ## 12. Upgradeability
 
-None, by choice. Migration story: a contract switch. A new version would have a new address and a new identifier, and the app would be re-pointed through `VITE_ARCSEND_CONTRACT_ADDRESS`. Open escrows on the old contract stay claimable there because the old contract cannot be changed or switched off.
+None, by choice. Migration story: a contract switch. A new version would have a new address and a new identifier, and the app would be re-pointed through `VITE_TOPPAY_CONTRACT_ADDRESS`. Open escrows on the old contract stay claimable there because the old contract cannot be changed or switched off.
 
 ## 13. Key management
 

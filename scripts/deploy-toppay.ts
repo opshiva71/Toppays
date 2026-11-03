@@ -1,13 +1,13 @@
 /**
- * Deploys contracts/ArcSend.sol to Arc Mainnet from YOUR wallet.
+ * Deploys contracts/TopPay.sol to Arc Mainnet from YOUR wallet.
  *
  *   forge build                       (run from the project root)
- *   DEPLOYER_PRIVATE_KEY=0x... bun run deploy:arcsend            # dry run: estimates only
- *   DEPLOYER_PRIVATE_KEY=0x... bun run deploy:arcsend --confirm  # broadcasts a real mainnet transaction
+ *   DEPLOYER_PRIVATE_KEY=0x... bun run deploy:toppay            # dry run: estimates only
+ *   DEPLOYER_PRIVATE_KEY=0x... bun run deploy:toppay --confirm  # broadcasts a real mainnet transaction
  *
  * The key is read from the environment only. It is never written to disk or printed.
  * Prefer a throwaway deployer wallet funded with just enough USDC for gas.
- * Nothing is written to .env: copy the printed address into VITE_ARCSEND_CONTRACT_ADDRESS yourself.
+ * Nothing is written to .env: copy the printed address into VITE_TOPPAY_CONTRACT_ADDRESS yourself.
  */
 
 import { existsSync, readFileSync } from 'node:fs'
@@ -15,7 +15,7 @@ import { resolve } from 'node:path'
 import { createPublicClient, createWalletClient, formatUnits, http, type Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { ARC_EXPLORER_URL, ARC_MAINNET_CHAIN_ID, ARC_RPC_URLS, MIN_MAX_FEE_PER_GAS, arcMainnet } from '../config/network'
-import { ARC_SEND_ABI, ARC_SEND_IDENTIFIER } from '../config/contract'
+import { TOPPAY_ABI, TOPPAY_IDENTIFIER } from '../config/contract'
 
 function fail(message: string): never {
   console.error(`\nDeploy aborted: ${message}\n`)
@@ -28,7 +28,7 @@ const rawKey = process.env.DEPLOYER_PRIVATE_KEY?.trim()
 if (!rawKey) fail('set DEPLOYER_PRIVATE_KEY in your shell environment (never in a committed file).')
 if (!/^0x[0-9a-fA-F]{64}$/.test(rawKey)) fail('DEPLOYER_PRIVATE_KEY must be 0x followed by 64 hex characters.')
 
-const artifactPath = resolve(process.cwd(), 'contracts/out/ArcSend.sol/ArcSend.json')
+const artifactPath = resolve(process.cwd(), 'contracts/out/TopPay.sol/TopPay.json')
 if (!existsSync(artifactPath)) fail('artifact not found. Run `forge build` first.')
 const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as { bytecode?: { object?: string } }
 const bytecode = artifact.bytecode?.object as Hex | undefined
@@ -70,7 +70,7 @@ if (!confirm) {
 
 console.log('\nBroadcasting deployment to Arc Mainnet...')
 const hash = await walletClient.deployContract({
-  abi: ARC_SEND_ABI,
+  abi: TOPPAY_ABI,
   bytecode,
   gas: (gas * 110n) / 100n,
   maxFeePerGas,
@@ -87,10 +87,10 @@ if (receipt.status !== 'success' || !receipt.contractAddress) {
 const deployed = receipt.contractAddress
 const code = await publicClient.getCode({ address: deployed })
 if (!code || code === '0x') fail(`no code found at ${deployed} after deployment.`)
-const id = await publicClient.readContract({ address: deployed, abi: ARC_SEND_ABI, functionName: 'identifier' })
-if (id !== ARC_SEND_IDENTIFIER) fail(`contract at ${deployed} returned an unexpected identifier.`)
+const id = await publicClient.readContract({ address: deployed, abi: TOPPAY_ABI, functionName: 'identifier' })
+if (id !== TOPPAY_IDENTIFIER) fail(`contract at ${deployed} returned an unexpected identifier.`)
 
-console.log(`\nDeployed and verified ArcSend at ${deployed}`)
+console.log(`\nDeployed and verified TopPay at ${deployed}`)
 console.log(`Explorer:       ${ARC_EXPLORER_URL}/address/${deployed}`)
 console.log('\nNext: add this line to your environment (.env or your host settings), then restart / rebuild the app:')
-console.log(`VITE_ARCSEND_CONTRACT_ADDRESS=${deployed}\n`)
+console.log(`VITE_TOPPAY_CONTRACT_ADDRESS=${deployed}\n`)

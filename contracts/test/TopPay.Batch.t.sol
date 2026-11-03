@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {stdError} from "forge-std/StdError.sol";
-import {ArcSend} from "../ArcSend.sol";
-import {ArcSendTestBase, Rejecter, NoReceive, Acceptor} from "./ArcSend.Base.t.sol";
+import {TopPay} from "../TopPay.sol";
+import {TopPayTestBase, Rejecter, NoReceive, Acceptor} from "./TopPay.Base.t.sol";
 
 /// sendBatch (atomic)
-contract ArcSendBatchTest is ArcSendTestBase {
+contract TopPayBatchTest is TopPayTestBase {
     function test_SendBatch_HappyPath() public {
         uint256 b = bob.balance;
         uint256 c = carol.balance;
@@ -21,13 +21,13 @@ contract ArcSendBatchTest is ArcSendTestBase {
 
     function test_SendBatch_EmitsPerRecipientPaymentsAndBatchSent() public {
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
+        emit TopPay.Payment(alice, bob, 1 ether, bytes32(uint256(1)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, carol, 2 ether, bytes32(uint256(2)));
+        emit TopPay.Payment(alice, carol, 2 ether, bytes32(uint256(2)));
         vm.expectEmit(true, true, true, true, address(arc));
-        emit ArcSend.Payment(alice, dave, 3 ether, bytes32(uint256(3)));
+        emit TopPay.Payment(alice, dave, 3 ether, bytes32(uint256(3)));
         vm.expectEmit(true, false, false, true, address(arc));
-        emit ArcSend.BatchSent(alice, 6 ether, 3);
+        emit TopPay.BatchSent(alice, 6 ether, 3);
         vm.prank(alice);
         arc.sendBatch{value: 6 ether}(_t3(bob, carol, dave), _a3(1 ether, 2 ether, 3 ether), _m(3));
     }
@@ -48,43 +48,43 @@ contract ArcSendBatchTest is ArcSendTestBase {
 
     function test_SendBatch_RevertsIncorrectValueTooLittle() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 2 ether, 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 2 ether, 3 ether));
         arc.sendBatch{value: 2 ether}(_t2(bob, carol), _a2(1 ether, 2 ether), _m(2));
     }
 
     function test_SendBatch_RevertsIncorrectValueTooMuch() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 4 ether, 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 4 ether, 3 ether));
         arc.sendBatch{value: 4 ether}(_t2(bob, carol), _a2(1 ether, 2 ether), _m(2));
     }
 
     function test_SendBatch_RevertsIncorrectValueZero() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.IncorrectValue.selector, 0, 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.IncorrectValue.selector, 0, 3 ether));
         arc.sendBatch(_t2(bob, carol), _a2(1 ether, 2 ether), _m(2));
     }
 
     function test_SendBatch_RevertsLengthMismatchAmounts() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.LengthMismatch.selector, 2, 3, 2));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.LengthMismatch.selector, 2, 3, 2));
         arc.sendBatch{value: 6 ether}(_t2(bob, carol), _a3(1 ether, 2 ether, 3 ether), _m(2));
     }
 
     function test_SendBatch_RevertsLengthMismatchMemos() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.LengthMismatch.selector, 2, 2, 3));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.LengthMismatch.selector, 2, 2, 3));
         arc.sendBatch{value: 3 ether}(_t2(bob, carol), _a2(1 ether, 2 ether), _m(3));
     }
 
     function test_SendBatch_RevertsEmptyBatch() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.EmptyBatch.selector);
+        vm.expectRevert(TopPay.EmptyBatch.selector);
         arc.sendBatch(new address payable[](0), new uint256[](0), new bytes32[](0));
     }
 
     function test_SendBatch_RevertsBatchTooLarge101() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.BatchTooLarge.selector, 101));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.BatchTooLarge.selector, 101));
         arc.sendBatch{value: 101 ether}(_fresh(101), _same(101, 1 ether), _m(101));
     }
 
@@ -100,19 +100,19 @@ contract ArcSendBatchTest is ArcSendTestBase {
 
     function test_SendBatch_RevertsZeroAddressItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAddress.selector);
+        vm.expectRevert(TopPay.ZeroAddress.selector);
         arc.sendBatch{value: 3 ether}(_t3(bob, address(0), carol), _a3(1 ether, 1 ether, 1 ether), _m(3));
     }
 
     function test_SendBatch_RevertsSelfTargetItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.SelfTarget.selector);
+        vm.expectRevert(TopPay.SelfTarget.selector);
         arc.sendBatch{value: 3 ether}(_t3(bob, address(arc), carol), _a3(1 ether, 1 ether, 1 ether), _m(3));
     }
 
     function test_SendBatch_RevertsZeroAmountItem() public {
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAmount.selector);
+        vm.expectRevert(TopPay.ZeroAmount.selector);
         arc.sendBatch{value: 2 ether}(_t3(bob, carol, dave), _a3(1 ether, 0, 1 ether), _m(3));
     }
 
@@ -128,7 +128,7 @@ contract ArcSendBatchTest is ArcSendTestBase {
         uint256 d = dave.balance;
         uint256 a = alice.balance;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rej), 2 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rej), 2 ether));
         arc.sendBatch{value: 6 ether}(_t3(bob, address(rej), dave), _a3(1 ether, 2 ether, 3 ether), _m(3));
         assertEq(bob.balance, b);
         assertEq(dave.balance, d);
@@ -140,7 +140,7 @@ contract ArcSendBatchTest is ArcSendTestBase {
         NoReceive nr = new NoReceive();
         uint256 b = bob.balance;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(nr), 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(nr), 3 ether));
         arc.sendBatch{value: 4 ether}(_t2(bob, address(nr)), _a2(1 ether, 3 ether), _m(2));
         assertEq(bob.balance, b);
         assertEq(address(arc).balance, 0);

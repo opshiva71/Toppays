@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAccount, useBalance, useReadContract, useSwitchChain } from 'wagmi'
 import { erc20Abi, type Address } from 'viem'
-import { ARC_SEND_CONTRACT, verifyArcSendContract } from '../../config/contract'
+import { TOPPAY_CONTRACT, verifyTopPayContract } from '../../config/contract'
 import { ARC_MAINNET_CHAIN_ID, ARC_USDC, RPC_SETTINGS } from '../../config/network'
 import { checkRpcHealth, publicClient } from '@/services/rpc'
 
@@ -59,8 +59,8 @@ export function useRpcHealth() {
 
 export function useContractStatus() {
   return useQuery({
-    queryKey: ['arcsend-contract', ARC_SEND_CONTRACT.state, ARC_SEND_CONTRACT.address],
-    queryFn: () => verifyArcSendContract(publicClient),
+    queryKey: ['toppay-contract', TOPPAY_CONTRACT.state, TOPPAY_CONTRACT.address],
+    queryFn: () => verifyTopPayContract(publicClient),
     staleTime: 60_000,
   })
 }

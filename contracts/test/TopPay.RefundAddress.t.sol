@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ArcSend} from "../ArcSend.sol";
-import {ArcSendTestBase, Rejecter} from "./ArcSend.Base.t.sol";
+import {TopPay} from "../TopPay.sol";
+import {TopPayTestBase, Rejecter} from "./TopPay.Base.t.sol";
 
 /// @dev Generic caller that can act as payer but has no receive(): rejects any payout.
 contract RejectingPayer {
@@ -16,7 +16,7 @@ contract RejectingPayer {
     }
 }
 
-contract ArcSendRefundAddressTest is ArcSendTestBase {
+contract TopPayRefundAddressTest is TopPayTestBase {
     uint8 internal constant OPEN = 1;
     uint8 internal constant REFUNDED = 3;
     uint8 internal constant RECLAIMED = 4;
@@ -35,7 +35,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         // exec forwards this test contract's msg.value; rp itself ends with zero balance.
         id = arc.nextEscrowId();
         rp.exec{value: amount}(
-            address(arc), abi.encodeCall(ArcSend.createEscrow, (bob, uint64(block.timestamp + duration), MEMO))
+            address(arc), abi.encodeCall(TopPay.createEscrow, (bob, uint64(block.timestamp + duration), MEMO))
         );
     }
 
@@ -59,7 +59,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         uint256 id = _mkEscrow(alice, bob, 2 ether, 1 days);
         uint256 a = alice.balance;
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefunded(id, alice, 2 ether, alice);
+        emit TopPay.EscrowRefunded(id, alice, 2 ether, alice);
         vm.prank(bob);
         arc.refundEscrow(id);
         assertEq(alice.balance, a + 2 ether);
@@ -70,9 +70,9 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
     function test_Set_ByPayerUpdatesAndEmits() public {
         uint256 id = _mkEscrow(alice, bob, 2 ether, 1 days);
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefundAddressSet(id, carol);
+        emit TopPay.EscrowRefundAddressSet(id, carol);
         _setRefund(alice, id, carol);
-        ArcSend.Escrow memory e = arc.getEscrow(id);
+        TopPay.Escrow memory e = arc.getEscrow(id);
         assertEq(e.refundTo, carol);
         assertEq(e.payer, alice, "payer unchanged");
         assertEq(e.payee, bob, "payee unchanged");
@@ -101,10 +101,10 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
     function test_Set_PayeeAndStrangerRevertNotPayer() public {
         uint256 id = _mkEscrow(alice, bob, 2 ether, 1 days);
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayer.selector, id, bob));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayer.selector, id, bob));
         arc.setEscrowRefundAddress(id, bob);
         vm.prank(carol);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayer.selector, id, carol));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayer.selector, id, carol));
         arc.setEscrowRefundAddress(id, carol);
         assertEq(arc.getEscrow(id).refundTo, alice);
     }
@@ -114,7 +114,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         vm.prank(alice);
         arc.releaseEscrow(id);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.EscrowNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.EscrowNotOpen.selector, id));
         arc.setEscrowRefundAddress(id, carol);
     }
 
@@ -123,7 +123,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         vm.prank(bob);
         arc.refundEscrow(id);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.EscrowNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.EscrowNotOpen.selector, id));
         arc.setEscrowRefundAddress(id, carol);
         assertEq(arc.getEscrow(id).refundTo, alice);
     }
@@ -134,13 +134,13 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         vm.prank(alice);
         arc.reclaimEscrow(id);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.EscrowNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.EscrowNotOpen.selector, id));
         arc.setEscrowRefundAddress(id, carol);
     }
 
     function test_Set_RevertsEscrowNotOpen_UnknownId() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.EscrowNotOpen.selector, 99));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.EscrowNotOpen.selector, 99));
         arc.setEscrowRefundAddress(99, carol);
     }
 
@@ -149,14 +149,14 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         vm.prank(alice);
         arc.releaseEscrow(id);
         vm.prank(carol);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.EscrowNotOpen.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.EscrowNotOpen.selector, id));
         arc.setEscrowRefundAddress(id, carol);
     }
 
     function test_Set_RevertsZeroAddress() public {
         uint256 id = _mkEscrow(alice, bob, 1 ether, 1 days);
         vm.prank(alice);
-        vm.expectRevert(ArcSend.ZeroAddress.selector);
+        vm.expectRevert(TopPay.ZeroAddress.selector);
         arc.setEscrowRefundAddress(id, address(0));
         assertEq(arc.getEscrow(id).refundTo, alice);
     }
@@ -164,7 +164,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
     function test_Set_RevertsSelfTarget() public {
         uint256 id = _mkEscrow(alice, bob, 1 ether, 1 days);
         vm.prank(alice);
-        vm.expectRevert(ArcSend.SelfTarget.selector);
+        vm.expectRevert(TopPay.SelfTarget.selector);
         arc.setEscrowRefundAddress(id, address(arc));
         assertEq(arc.getEscrow(id).refundTo, alice);
     }
@@ -186,7 +186,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         uint256 b = bob.balance;
 
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefunded(id, alice, 3 ether, carol);
+        emit TopPay.EscrowRefunded(id, alice, 3 ether, carol);
         vm.recordLogs();
         vm.prank(bob);
         arc.refundEscrow(id);
@@ -214,19 +214,19 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
 
         // Default destination cannot receive: refund reverts and escrow stays open.
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rp), 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rp), 3 ether));
         arc.refundEscrow(id);
         assertEq(arc.getEscrow(id).status, OPEN);
         assertEq(address(arc).balance, 3 ether);
 
         // Payer contract redirects to an EOA it controls.
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefundAddressSet(id, carol);
-        rp.exec(address(arc), abi.encodeCall(ArcSend.setEscrowRefundAddress, (id, carol)));
+        emit TopPay.EscrowRefundAddressSet(id, carol);
+        rp.exec(address(arc), abi.encodeCall(TopPay.setEscrowRefundAddress, (id, carol)));
 
         uint256 c = carol.balance;
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowRefunded(id, address(rp), 3 ether, carol);
+        emit TopPay.EscrowRefunded(id, address(rp), 3 ether, carol);
         vm.prank(bob);
         arc.refundEscrow(id);
 
@@ -241,7 +241,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         Rejecter rej = new Rejecter();
         _setRefund(alice, id, address(rej));
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rej), 3 ether));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rej), 3 ether));
         arc.refundEscrow(id);
         assertEq(arc.getEscrow(id).status, OPEN);
 
@@ -262,7 +262,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         uint256 c = carol.balance;
 
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowReclaimed(id, alice, 3 ether, carol);
+        emit TopPay.EscrowReclaimed(id, alice, 3 ether, carol);
         vm.prank(alice);
         arc.reclaimEscrow(id);
 
@@ -277,7 +277,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         _setRefund(alice, id, carol);
         vm.warp(T0 + 1 days);
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.DeadlineNotPassed.selector, id, uint64(T0 + 1 days)));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.DeadlineNotPassed.selector, id, uint64(T0 + 1 days)));
         arc.reclaimEscrow(id);
     }
 
@@ -286,19 +286,19 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         _setRefund(alice, id, carol);
         vm.warp(T0 + 2 days);
         vm.prank(carol);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.NotPayer.selector, id, carol));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.NotPayer.selector, id, carol));
         arc.reclaimEscrow(id);
     }
 
     function test_Reclaim_RejectingPayerRedirectsThenReclaims() public {
         (RejectingPayer rp, uint256 id) = _mkRejectingPayerEscrow(2 ether, 1 days);
         vm.warp(T0 + 1 days + 1);
-        vm.expectRevert(abi.encodeWithSelector(ArcSend.TransferFailed.selector, address(rp), 2 ether));
-        rp.exec(address(arc), abi.encodeCall(ArcSend.reclaimEscrow, (id)));
+        vm.expectRevert(abi.encodeWithSelector(TopPay.TransferFailed.selector, address(rp), 2 ether));
+        rp.exec(address(arc), abi.encodeCall(TopPay.reclaimEscrow, (id)));
 
-        rp.exec(address(arc), abi.encodeCall(ArcSend.setEscrowRefundAddress, (id, dave)));
+        rp.exec(address(arc), abi.encodeCall(TopPay.setEscrowRefundAddress, (id, dave)));
         uint256 d = dave.balance;
-        rp.exec(address(arc), abi.encodeCall(ArcSend.reclaimEscrow, (id)));
+        rp.exec(address(arc), abi.encodeCall(TopPay.reclaimEscrow, (id)));
         assertEq(dave.balance, d + 2 ether);
         assertEq(arc.getEscrow(id).status, RECLAIMED);
         assertEq(address(arc).balance, 0);
@@ -314,7 +314,7 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
         uint256 a = alice.balance;
 
         vm.expectEmit(true, true, false, true, address(arc));
-        emit ArcSend.EscrowReleased(id, bob, 3 ether);
+        emit TopPay.EscrowReleased(id, bob, 3 ether);
         vm.prank(alice);
         arc.releaseEscrow(id);
 
@@ -326,9 +326,9 @@ contract ArcSendRefundAddressTest is ArcSendTestBase {
 
     function test_Release_RejectingPayerWithRedirectStillPaysPayee() public {
         (RejectingPayer rp, uint256 id) = _mkRejectingPayerEscrow(2 ether, 1 days);
-        rp.exec(address(arc), abi.encodeCall(ArcSend.setEscrowRefundAddress, (id, carol)));
+        rp.exec(address(arc), abi.encodeCall(TopPay.setEscrowRefundAddress, (id, carol)));
         uint256 b = bob.balance;
-        rp.exec(address(arc), abi.encodeCall(ArcSend.releaseEscrow, (id)));
+        rp.exec(address(arc), abi.encodeCall(TopPay.releaseEscrow, (id)));
         assertEq(bob.balance, b + 2 ether);
         assertEq(address(arc).balance, 0);
     }
