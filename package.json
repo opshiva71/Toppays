@@ -14,8 +14,12 @@
     "deploy:arcsend": "bun run ./scripts/deploy-arcsend.ts",
     "verify:mainnet": "bun run ./scripts/verify-mainnet.ts",
     "build": "vite build",
+    "verify:uniswap": "bun run ./scripts/verify-uniswap.ts",
+    "test:swap": "bun run ./scripts/test-swap.ts",
+    "test:swap-fork": "bun run ./scripts/test-swap-fork.ts",
     "contracts:build": "forge build",
-    "contracts:test": "forge test"
+    "contracts:test": "forge test",
+    "test:rpc": "bun run ./scripts/test-rpc.ts"
   },
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^10.8.1",

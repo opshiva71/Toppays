@@ -37,12 +37,21 @@ function parseHttpsUrls(raw: string | undefined): string[] {
 
 const env = import.meta.env as Record<string, string | undefined>
 
+/**
+ * Extra public Arc Mainnet endpoints listed in the official Arc docs
+ * (https://docs.arc.io/arc/references/connect-to-arc.md, "RPC endpoints").
+ * Used only when the primary endpoint is rate limiting or unreachable, and only
+ * after the endpoint proves it is chain 5042 (see `createArcTransport`).
+ */
+export const ARC_OFFICIAL_FALLBACK_RPC_URLS: readonly string[] = ['https://rpc.blockdaemon.mainnet.arc.io']
+
 /** Ordered, de-duplicated list of RPC endpoints. Index 0 is tried first. */
 export const ARC_RPC_URLS: readonly string[] = Array.from(
   new Set([
     ...parseHttpsUrls(env.VITE_ARC_RPC_URL),
     ...arcFact.rpcUrls,
     ...parseHttpsUrls(env.VITE_ARC_RPC_FALLBACK_URLS),
+    ...ARC_OFFICIAL_FALLBACK_RPC_URLS,
   ]),
 )
 
@@ -83,6 +92,15 @@ export const RPC_SETTINGS = {
   retryCount: 3,
   retryDelayMs: 300,
   healthPollMs: 15_000,
+  /**
+   * The public endpoint rejects bursts (about 20 calls inside a few hundred ms
+   * return "rate limit exceeded") but accepts a steady stream. Requests are
+   * therefore started at most one per `minSpacingMs` with `maxConcurrent` in flight.
+   */
+  maxConcurrent: 6,
+  minSpacingMs: 45,
+  /** After a rate limit an endpoint is skipped this long while another one is available. */
+  cooldownMs: 15_000,
 } as const
 
 export const HISTORY_SETTINGS = {

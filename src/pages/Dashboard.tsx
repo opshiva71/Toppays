@@ -4,6 +4,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
 import { useArcWallet, useSpendableNative, useUsdcBalance } from '@/hooks/useArc'
 import { useSendUsdc } from '@/hooks/useSendUsdc'
+import { useUniswapSwap } from '@/hooks/useUniswapSwap'
 import { useTransactionHistory } from '@/hooks/useTransactionHistory'
 import { formatNativeAsUsdc, shortAddress } from '@/lib/format'
 import type { HistoryEntry } from '@/services/history'
@@ -18,7 +19,9 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { ReceiveSheet } from '@/components/ReceiveSheet'
 import { SendSheet } from '@/components/SendSheet'
 import { Sheet } from '@/components/Sheet'
+import { SwapPanel } from '@/components/SwapPanel'
 import { TransactionList } from '@/components/TransactionList'
+import { ViewTabs, type View } from '@/components/ViewTabs'
 
 export function Dashboard() {
   const wallet = useArcWallet()
@@ -28,6 +31,7 @@ export function Dashboard() {
   const [sendOpen, setSendOpen] = useState(false)
   const [receiveOpen, setReceiveOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [view, setView] = useState<View>('wallet')
   const openSettings = useCallback(() => setSettingsOpen(true), [])
 
   const { refetch: refetchBalance } = balance
@@ -53,6 +57,8 @@ export function Dashboard() {
   )
 
   const send = useSendUsdc({ onConfirmed: refreshBalances })
+  const swap = useUniswapSwap({ onSettled: refreshBalances })
+  const { dismiss: dismissSwap } = swap
   const sendPhase = send.state.phase
   const { reset: resetSend, busy: sendBusy } = send
 
@@ -62,10 +68,11 @@ export function Dashboard() {
     if (previousAddress.current && address && previousAddress.current !== address) {
       toast.info(`Wallet account changed to ${shortAddress(address)}`)
       resetSend()
+      dismissSwap()
       setSendOpen(false)
     }
     previousAddress.current = address
-  }, [address, resetSend])
+  }, [address, resetSend, dismissSwap])
 
   // Toasts for final send results.
   const lastToasted = useRef<string>('')
@@ -127,36 +134,44 @@ export function Dashboard() {
           </div>
         )}
 
-        <BalanceCard
-          address={address}
-          balance={balance.data}
-          loading={balance.isLoading}
-          failed={balance.isError && balance.data === undefined}
-          onRetry={() => void balance.refetch()}
-        />
+        <ViewTabs view={view} onChange={setView} />
 
-        <ActionCards
-          onSend={() => setSendOpen(true)}
-          onReceive={() => setReceiveOpen(true)}
-          sendDisabled={balance.data === undefined}
-        />
+        {view === 'swap' ? (
+          <SwapPanel swap={swap} />
+        ) : (
+          <>
+          <BalanceCard
+            address={address}
+            balance={balance.data}
+            loading={balance.isLoading}
+            failed={balance.isError && balance.data === undefined}
+            onRetry={() => void balance.refetch()}
+          />
 
-        {trackingSend && (
-          <button
-            type="button"
-            onClick={() => setSendOpen(true)}
-            className="card flex w-full items-center justify-between gap-3 p-4 text-left text-sm"
-          >
-            <span className="flex items-center gap-2 font-semibold">
-              <StatusBadge status={sendPhase === 'unconfirmed' ? 'unconfirmed' : 'pending'} />
-              {sendPhase === 'unconfirmed' ? 'Payment not confirmed yet' : 'Payment in progress'}
-            </span>
-            <span style={{ color: 'var(--accent-hover)' }}>View</span>
-          </button>
+          <ActionCards
+            onSend={() => setSendOpen(true)}
+            onReceive={() => setReceiveOpen(true)}
+            sendDisabled={balance.data === undefined}
+          />
+
+          {trackingSend && (
+            <button
+              type="button"
+              onClick={() => setSendOpen(true)}
+              className="card flex w-full items-center justify-between gap-3 p-4 text-left text-sm"
+            >
+              <span className="flex items-center gap-2 font-semibold">
+                <StatusBadge status={sendPhase === 'unconfirmed' ? 'unconfirmed' : 'pending'} />
+                {sendPhase === 'unconfirmed' ? 'Payment not confirmed yet' : 'Payment in progress'}
+              </span>
+              <span style={{ color: 'var(--accent-hover)' }}>View</span>
+            </button>
+          )}
+
+          <TransactionList history={history} />
+          <NetworkInfo onOpenSettings={openSettings} />
+          </>
         )}
-
-        <TransactionList history={history} />
-        <NetworkInfo onOpenSettings={openSettings} />
       </main>
       <Footer />
 
