@@ -58,7 +58,7 @@ export function SwapDetails({ quote, refreshing }: SwapDetailsProps) {
       <Row label="Price impact" hint="How much your trade moves the pool price, not counting the pool fee">
         <span style={{ color: impactColor }}>{impact < 0.01 ? '<0.01%' : `${impact.toFixed(2)}%`}</span>
       </Row>
-      <Row label="Pool fee" hint="Paid to liquidity providers. TopPay adds no fee.">
+      <Row label="Pool fee" hint="Paid to liquidity providers. TOPpay adds no fee.">
         {feeLabel}
       </Row>
       <Row label="Network fee" hint="Estimated from the quoter's gas figure; replaced by a real estimate before you sign">

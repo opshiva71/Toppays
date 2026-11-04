@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ArrowDownUp, ChevronDown, Layers, Loader2, RefreshCw, Settings2 } from 'lucide-react'
+import { AlertTriangle, ArrowDownUp, ChevronDown, Info, Layers, Loader2, RefreshCw, Settings2 } from 'lucide-react'
 import { formatUnits } from 'viem'
 import { SWAP_SETTINGS } from '../../config/uniswap'
 import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
@@ -7,6 +7,7 @@ import type { useUniswapSwap } from '@/hooks/useUniswapSwap'
 import { formatTokenAmount } from '@/services/swapTokens'
 import { ContractBadge } from './swap/ContractBadge'
 import { SlippageControl } from './swap/SlippageControl'
+import { SwapRiskInfo } from './swap/SwapRiskInfo'
 import { SwapDetails } from './swap/SwapDetails'
 import { SwapStatus } from './swap/SwapStatus'
 import { TokenIcon } from './swap/TokenIcon'
@@ -25,6 +26,7 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
   const [payPicker, setPayPicker] = useState(false)
   const [receivePicker, setReceivePicker] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [riskOpen, setRiskOpen] = useState(false)
 
   const { tokenIn, tokenOut, quote, execution, wallet } = swap
   const symbolIn = tokenIn.symbol
@@ -54,9 +56,21 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
       <div className="card p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 id="swap-title" className="display text-3xl font-bold tracking-tight">
-              Swap
-            </h1>
+            <div className="flex items-center gap-1">
+              <h1 id="swap-title" className="display text-3xl font-bold tracking-tight">
+                Swap
+              </h1>
+              <button
+                type="button"
+                onClick={() => setRiskOpen(true)}
+                aria-label="Swap risks: read before you swap"
+                aria-haspopup="dialog"
+                className="-my-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-white/70"
+                style={{ color: 'var(--muted)' }}
+              >
+                <Info className="size-5" />
+              </button>
+            </div>
             <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
               Trade tokens on Arc Mainnet through Uniswap.
             </p>
@@ -85,13 +99,6 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
         <div className="mt-2">
           <ContractBadge />
         </div>
-
-        <p className="mt-4 flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed" style={{ background: 'rgba(154,91,0,0.1)', color: 'var(--warning)' }}>
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <span>
-            Swaps use real funds on Arc Mainnet and cannot be reversed. Prices can move before your swap confirms. Check the amounts, the minimum received and the price impact before you approve in your wallet.
-          </span>
-        </p>
 
         {settingsOpen && (
           <div className="inner mt-4 p-4">
@@ -264,9 +271,17 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
           </p>
         )}
         <p className="text-center text-xs" style={{ color: 'var(--subtle)' }}>
-          Quotes come straight from Uniswap V3 pools on Arc Mainnet. TopPay adds no fee, uses no API and no other aggregator.
+          Real funds · swaps can't be reversed ·{' '}
+          <button type="button" onClick={() => setRiskOpen(true)} className="font-semibold underline underline-offset-2" style={{ color: 'var(--accent-hover)' }}>
+            Read the risks
+          </button>
+        </p>
+        <p className="text-center text-xs" style={{ color: 'var(--subtle)' }}>
+          Quotes come straight from Uniswap V3 pools on Arc Mainnet. TOPpay adds no fee, uses no API and no other aggregator.
         </p>
       </div>
+
+      <SwapRiskInfo open={riskOpen} onClose={() => setRiskOpen(false)} />
 
       <TokenSelect
         open={payPicker}

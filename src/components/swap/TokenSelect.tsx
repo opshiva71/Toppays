@@ -52,7 +52,7 @@ export function TokenSelect({ open, title, selected, other, balances, onSelect, 
         })}
       </ul>
       <p className="mt-3 text-xs" style={{ color: 'var(--subtle)' }}>
-        Only tokens with live Uniswap pools on Arc Mainnet that TopPay has checked onchain are listed.
+        Only tokens with live Uniswap pools on Arc Mainnet that TOPpay has checked onchain are listed.
       </p>
     </Sheet>
   )

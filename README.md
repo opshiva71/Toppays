@@ -1,4 +1,4 @@
-# TopPay
+# TOPpay
 
 A lightweight dashboard to send and receive USDC on Arc Mainnet from a browser wallet such as MetaMask. It shows your real USDC balance, a QR code to receive payments, and your recent sent and received transactions read from the chain.
 

@@ -130,7 +130,7 @@ export function DeveloperSettings() {
         <p className="py-3 text-xs" style={{ color: 'var(--subtle)' }}>
           {contract?.state === 'invalid'
             ? contract.reason
-            : 'The optional TopPay contract (v2) adds memo receipts, batch payments, payment requests and escrow. To use one, deploy it yourself, set VITE_TOPPAY_CONTRACT_ADDRESS and rebuild. The app checks the address onchain before showing it as verified.'}
+            : 'The optional TOPpay payments contract (v2) adds memo receipts, batch payments, payment requests and escrow. To use one, deploy it yourself, set VITE_TOPPAY_CONTRACT_ADDRESS and rebuild. The app checks the address onchain before showing it as verified.'}
         </p>
       </Section>
     </div>

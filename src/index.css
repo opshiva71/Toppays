@@ -84,6 +84,17 @@ body {
     box-shadow: 0 1px 2px rgba(18, 45, 69, 0.05), 0 28px 56px -24px rgba(18, 45, 69, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
+  .topbar {
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background: var(--surface-strong);
+    box-shadow:
+      0 1px 2px rgba(18, 45, 69, 0.05),
+      0 10px 30px -14px rgba(18, 45, 69, 0.22);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+  }
+
   .chip {
     display: inline-flex;
     align-items: center;

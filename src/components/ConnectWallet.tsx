@@ -37,7 +37,7 @@ export function ConnectWallet() {
       </div>
       <h1 className="display text-balance text-3xl font-semibold">Send and receive USDC on Arc</h1>
       <p className="mt-2 text-pretty text-sm" style={{ color: 'var(--muted)' }}>
-        Connect MetaMask or another browser wallet. TopPay never asks for your seed phrase or private key.
+        Connect MetaMask or another browser wallet. TOPpay never asks for your seed phrase or private key.
       </p>
 
       <div className="mt-6 space-y-2">
