@@ -40,7 +40,7 @@ const StudioWatermark = () => (
     rel="noopener noreferrer"
     style={{
       position: 'fixed',
-      bottom: '16px',
+      bottom: 'var(--watermark-bottom, 16px)',
       right: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -74,7 +74,7 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <App />
         <StudioWatermark />
-        <Toaster position="top-center" />
+        <Toaster position="top-center" theme="dark" offset={76} mobileOffset={68} />
       </QueryClientProvider>
     </WagmiProvider>
   </StrictMode>,

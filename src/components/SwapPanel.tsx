@@ -65,7 +65,7 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
                 onClick={() => setRiskOpen(true)}
                 aria-label="Swap risks: read before you swap"
                 aria-haspopup="dialog"
-                className="-my-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-white/70"
+                className="-my-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-white/10"
                 style={{ color: 'var(--muted)' }}
               >
                 <Info className="size-5" />
@@ -150,7 +150,7 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
               title={reserveNote}
               onClick={() => swap.maxAmount !== null && swap.setAmount(formatUnits(swap.maxAmount, tokenIn.decimals))}
               className="min-h-8 rounded-full px-3 font-semibold disabled:opacity-40"
-              style={{ background: 'rgba(16,97,166,0.1)', color: 'var(--accent-hover)' }}
+              style={{ background: 'rgba(96,165,250,0.14)', color: 'var(--accent-hover)' }}
             >
               MAX
             </button>
@@ -216,7 +216,7 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
         </div>
 
         {swap.quoteError && (
-          <div role="alert" className="flex items-start justify-between gap-3 rounded-xl p-3 text-sm" style={{ background: 'rgba(186,43,76,0.08)', color: 'var(--danger)' }}>
+          <div role="alert" className="flex items-start justify-between gap-3 rounded-xl p-3 text-sm" style={{ background: 'rgba(248,113,113,0.1)', color: 'var(--danger)' }}>
             <span className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" /> {swap.quoteError.message}
             </span>
@@ -231,12 +231,12 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
         {quote && <SwapDetails quote={quote} refreshing={swap.fetching} />}
 
         {swap.highImpact && quote && (
-          <label className="flex items-start gap-3 rounded-xl p-3 text-sm" style={{ background: 'rgba(186,43,76,0.08)' }}>
+          <label className="flex items-start gap-3 rounded-xl p-3 text-sm" style={{ background: 'rgba(248,113,113,0.1)' }}>
             <input
               type="checkbox"
               checked={swap.impactAck}
               onChange={(event) => swap.setImpactAck(event.target.checked)}
-              className="mt-0.5 size-5 shrink-0 accent-[#ba2b4c]"
+              className="mt-0.5 size-5 shrink-0 accent-[#f87171]"
             />
             <span>
               This trade has a price impact of <strong>{quote.priceImpact.toFixed(2)}%</strong> (at or above {SWAP_SETTINGS.priceImpactDanger}%). I understand I may receive much less than the market price.
@@ -245,13 +245,13 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
         )}
 
         {swap.notice && (
-          <p role="status" className="rounded-xl p-3 text-sm" style={{ background: 'rgba(26,128,71,0.08)', color: 'var(--success)' }}>
+          <p role="status" className="rounded-xl p-3 text-sm" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
             {swap.notice}
           </p>
         )}
 
         {execution.phase === 'idle' && execution.message && (
-          <p role="status" className="rounded-xl p-3 text-sm" style={{ background: 'rgba(16,97,166,0.08)' }}>
+          <p role="status" className="rounded-xl p-3 text-sm" style={{ background: 'rgba(96,165,250,0.1)' }}>
             {execution.message}
           </p>
         )}

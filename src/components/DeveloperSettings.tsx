@@ -6,7 +6,7 @@ import { useContractStatus, useRpcHealth } from '@/hooks/useArc'
 import { copyText, shortAddress } from '@/lib/format'
 import { StatusBadge } from './StatusBadge'
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
       <h3 className="label">{title}</h3>
@@ -15,7 +15,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+export function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex min-h-12 items-center justify-between gap-4 py-2.5">
       <span style={{ color: 'var(--muted)' }}>{label}</span>
@@ -24,7 +24,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function CopyValue({ value, display }: { value: string; display: string }) {
+export function CopyValue({ value, display }: { value: string; display: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -46,7 +46,7 @@ function CopyValue({ value, display }: { value: string; display: string }) {
 }
 
 /** Developer-facing details: network, RPC endpoints and the optional receipt contract. */
-export function DeveloperSettings() {
+export function DeveloperSettings({ hideNetwork = false }: { hideNetwork?: boolean }) {
   const { data: health } = useRpcHealth()
   const { data: contract } = useContractStatus()
 
@@ -56,6 +56,7 @@ export function DeveloperSettings() {
         Technical details for operators. Payments are plain native USDC transfers and work without any of the optional items below.
       </p>
 
+      {!hideNetwork && (
       <Section title="Network">
         <Row label="Name">Arc Mainnet</Row>
         <Row label="Chain ID">
@@ -71,6 +72,7 @@ export function DeveloperSettings() {
           <CopyValue value={ARC_USDC.address} display={shortAddress(ARC_USDC.address, 8, 6)} />
         </Row>
       </Section>
+      )}
 
       <Section title="RPC">
         <Row label="Status">
@@ -130,7 +132,7 @@ export function DeveloperSettings() {
         <p className="py-3 text-xs" style={{ color: 'var(--subtle)' }}>
           {contract?.state === 'invalid'
             ? contract.reason
-            : 'The optional TOPpay payments contract (v2) adds memo receipts, batch payments, payment requests and escrow. To use one, deploy it yourself, set VITE_TOPPAY_CONTRACT_ADDRESS and rebuild. The app checks the address onchain before showing it as verified.'}
+            : 'The optional TopPay payments contract (v2) adds memo receipts, batch payments, payment requests and escrow. To use one, deploy it yourself, set VITE_TOPPAY_CONTRACT_ADDRESS and rebuild. The app checks the address onchain before showing it as verified.'}
         </p>
       </Section>
     </div>

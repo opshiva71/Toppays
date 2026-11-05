@@ -32,12 +32,12 @@ export function ConnectWallet() {
 
   return (
     <section className="card mx-auto w-full max-w-md p-6 sm:p-8">
-      <div className="mb-5 flex size-12 items-center justify-center rounded-2xl" style={{ background: 'var(--accent)' }}>
+      <div className="tile-icon mb-5 !size-12 !rounded-2xl">
         <Wallet className="size-6 text-white" />
       </div>
-      <h1 className="display text-balance text-3xl font-semibold">Send and receive USDC on Arc</h1>
+      <h2 className="display text-balance text-2xl font-semibold sm:text-3xl">Connect your wallet</h2>
       <p className="mt-2 text-pretty text-sm" style={{ color: 'var(--muted)' }}>
-        Connect MetaMask or another browser wallet. TOPpay never asks for your seed phrase or private key.
+        Connect MetaMask or another browser wallet. TopPay never asks for your seed phrase or private key.
       </p>
 
       <div className="mt-6 space-y-2">

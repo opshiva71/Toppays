@@ -33,7 +33,7 @@ export function SlippageControl({ value, onChange }: SlippageControlProps) {
               onChange(preset)
             }}
             className="chip min-h-11 px-4 text-sm font-semibold"
-            style={value === preset && custom === '' ? { background: 'var(--ink)', color: '#fff', borderColor: 'var(--ink)' } : undefined}
+            style={value === preset && custom === '' ? { background: 'var(--grad)', color: '#fff', borderColor: 'transparent' } : undefined}
           >
             {pct(preset)}
           </button>
@@ -62,7 +62,7 @@ export function SlippageControl({ value, onChange }: SlippageControlProps) {
         </p>
       )}
       {value >= SWAP_SETTINGS.highSlippage && !customInvalid && (
-        <p className="flex items-start gap-2 rounded-xl p-3 text-xs" style={{ background: 'rgba(154,91,0,0.1)', color: 'var(--warning)' }}>
+        <p className="flex items-start gap-2 rounded-xl p-3 text-xs" style={{ background: 'rgba(251,191,36,0.1)', color: 'var(--warning)' }}>
           <AlertTriangle className="mt-0.5 size-4 shrink-0" /> High slippage lets the trade fill at a much worse price, which makes front-running easier.
         </p>
       )}

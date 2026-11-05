@@ -89,7 +89,7 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
             <input
               id="amount"
               inputMode="decimal"
-              className="display w-full bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-slate-300"
+              className="display w-full bg-transparent text-4xl font-bold tabular-nums outline-none placeholder:text-slate-600"
               placeholder="0.00"
               value={amount}
               onChange={(event) => setAmount(sanitizeAmountInput(event.target.value))}
@@ -122,8 +122,15 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
           )}
         </div>
 
+        <div className="inner flex items-center justify-between gap-3 px-4 py-3 text-xs">
+          <span style={{ color: 'var(--muted)' }}>Estimated network fee</span>
+          <span className="font-semibold tabular-nums">
+            {fees ? `up to ${formatNativeAsUsdc(TRANSFER_GAS_RESERVE * fees.maxFeePerGas)} USDC` : 'Estimating…'}
+          </span>
+        </div>
+
         {state.message && (
-          <p role="alert" className="flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: 'rgba(186,43,76,0.08)', color: 'var(--danger)' }}>
+          <p role="alert" className="flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: 'rgba(248,113,113,0.1)', color: 'var(--danger)' }}>
             <AlertTriangle className="mt-0.5 size-4 shrink-0" /> {state.message}
           </p>
         )}
@@ -173,7 +180,7 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
         </div>
 
         {quote.recipientIsContract && (
-          <p className="flex items-start gap-2 rounded-xl p-3 text-xs" style={{ background: 'rgba(154,91,0,0.1)', color: 'var(--warning)' }}>
+          <p className="flex items-start gap-2 rounded-xl p-3 text-xs" style={{ background: 'rgba(251,191,36,0.1)', color: 'var(--warning)' }}>
             <AlertTriangle className="mt-0.5 size-4 shrink-0" /> The recipient is a smart contract. Make sure it can receive USDC, or the transfer may fail.
           </p>
         )}
@@ -182,9 +189,20 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
             {state.message}
           </p>
         )}
-        <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-          This sends real USDC on Arc Mainnet. Blockchain transfers cannot be reversed. Your wallet will ask you to approve.
-        </p>
+        <ol className="inner space-y-2 p-4 text-xs" style={{ color: 'var(--muted)' }} aria-label="What happens next">
+          <li className="flex gap-2.5">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--grad)' }}>1</span>
+            Press Confirm in wallet. Your wallet opens a request showing this exact amount and recipient.
+          </li>
+          <li className="flex gap-2.5">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--grad)' }}>2</span>
+            Check the details there, then approve. Nothing is sent until you do.
+          </li>
+          <li className="flex gap-2.5">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--grad)' }}>3</span>
+            We show Confirmed only after Arc Mainnet includes the payment. Real USDC; it cannot be reversed.
+          </li>
+        </ol>
 
         <div className="grid grid-cols-[auto_1fr] gap-3">
           <button type="button" className="btn btn-secondary" onClick={backToEdit}>

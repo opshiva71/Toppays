@@ -22,7 +22,7 @@ Send and receive native USDC on Arc Mainnet (chain 5042) from a browser wallet. 
 - `src/services/send.ts`: validation, fee floor (maxFeePerGas >= 20 gwei), quote building
 - `src/services/history.ts`: history from the EIP-7708 system emitter `0xffff...fffE` (18 decimals). Never also read the ERC-20 logs (double count)
 - `src/hooks/useSendUsdc.ts`: send state machine. One submission per review, no auto-resubmit, success only from a mined receipt
-- `src/pages/Dashboard.tsx` composes the components in `src/components/`: hero `BalanceCard`, `ActionCards`, `TransactionList` (filters, day groups, `StatusBadge`), compact `NetworkInfo`. Contract and RPC details live only in the Settings sheet (`DeveloperSettings`), never as warnings on the main screen
+- UI: dark premium theme (tokens in `src/index.css`). `src/pages/Dashboard.tsx` is the container (wallet, balance, history, send and swap hooks); hash routes via `useRoute` (`#/dashboard`, `#/send`, `#/receive`, `#/swap`, `#/bridge`, `#/activity`, `#/settings`); pages live in `src/pages/`, shell (sidebar, top bar, bottom nav) in `src/components/shell/`. Bridge is a Coming-soon preview with no fake data. Contract and RPC details are on the Settings page (`DeveloperSettings`)
 - `docs/PRODUCTION.md`, `docs/DEPLOYMENT.md`, `scripts/deploy-toppay.ts`: production guide and user-run contract deployment (key via shell env only)
 - `scripts/verify-mainnet.ts` (`bun run verify:mainnet`): read-only live checks
 - History uses `log.blockTimestamp` from the RPC; never fetch one block per row (it rate-limits on busy wallets)

@@ -1,6 +1,6 @@
-# TOPpay
+# TopPay
 
-A lightweight dashboard to send and receive USDC on Arc Mainnet from a browser wallet such as MetaMask. It shows your real USDC balance, a QR code to receive payments, and your recent sent and received transactions read from the chain.
+TopPay: Send. Receive. Move Money. A premium dark-themed wallet for USDC on Arc Mainnet, used from a browser wallet such as MetaMask. It shows your real USDC balance, a QR code to receive payments, swaps through Uniswap, and your sent and received transactions read from the chain.
 
 Built with [Arc Studio](https://studio.arc.io)
 
@@ -9,6 +9,9 @@ Built with [Arc Studio](https://studio.arc.io)
 > The optional payments contract is now named **TopPay** (`contracts/TopPay.sol`, previously `ArcSend.sol`). Behavior and security protections are unchanged. It is version 2: single and batch payments, payment requests and escrow. Its onchain identifier is deliberately still `keccak256("ArcSend.v2")`, so a contract already deployed from the old source stays recognized by the app. Version 1 was never deployed. The address variable is now `VITE_TOPPAY_CONTRACT_ADDRESS`; the old `VITE_ARCSEND_CONTRACT_ADDRESS` is still read if the new one is empty.
 
 ## Features
+
+- Dark premium design with a sidebar on desktop and a bottom navigation bar on phones: Dashboard, Send, Receive, Swap, Bridge, Activity and Settings (each page has its own address, for example `#/send`)
+- Bridge screen is a preview only: it is marked Coming soon and never shows quotes or moves funds until a real bridge is connected
 
 - Connect MetaMask or another browser wallet; the app reacts to account and network changes
 - Send USDC with address and amount validation, a fee estimate, a summary step and wallet approval

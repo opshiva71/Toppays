@@ -1,38 +1,36 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
 import { useArcWallet, useSpendableNative, useUsdcBalance } from '@/hooks/useArc'
+import { useRoute } from '@/hooks/useRoute'
 import { useSendUsdc } from '@/hooks/useSendUsdc'
 import { useUniswapSwap } from '@/hooks/useUniswapSwap'
 import { useTransactionHistory } from '@/hooks/useTransactionHistory'
-import { formatNativeAsUsdc, shortAddress } from '@/lib/format'
+import { formatNativeAsUsdc, formatUsdcRaw, shortAddress } from '@/lib/format'
 import type { HistoryEntry } from '@/services/history'
-import { BalanceCard } from '@/components/BalanceCard'
-import { ConnectWallet } from '@/components/ConnectWallet'
-import { Footer } from '@/components/Footer'
-import { Header } from '@/components/Header'
-import { ActionCards } from '@/components/ActionCards'
-import { DeveloperSettings } from '@/components/DeveloperSettings'
-import { NetworkInfo } from '@/components/NetworkInfo'
-import { StatusBadge } from '@/components/StatusBadge'
-import { ReceiveSheet } from '@/components/ReceiveSheet'
-import { SendSheet } from '@/components/SendSheet'
-import { Sheet } from '@/components/Sheet'
-import { SwapPanel } from '@/components/SwapPanel'
-import { TransactionList } from '@/components/TransactionList'
-import { ViewTabs, type View } from '@/components/ViewTabs'
+import type { LocalSend } from '@/components/ActivityList'
+import { AppShell } from '@/components/shell/AppShell'
+import { navFor } from '@/components/shell/nav'
+import { ActivityPage } from './ActivityPage'
+import { BridgePage } from './BridgePage'
+import { DashboardPage } from './DashboardPage'
+import { LandingPage } from './LandingPage'
+import { ReceivePage } from './ReceivePage'
+import { SendPage } from './SendPage'
+import { SettingsPage } from './SettingsPage'
+import { SwapPage } from './SwapPage'
 
+/**
+ * App container. It owns the wallet, balance, history, send and swap state exactly as before; the pages
+ * only present it. Navigating between pages never resets an in-flight payment or swap.
+ */
 export function Dashboard() {
   const wallet = useArcWallet()
   const { address, isConnected } = wallet
+  const { route, navigate } = useRoute()
   const balance = useUsdcBalance(address)
   const spendable = useSpendableNative(address)
-  const [sendOpen, setSendOpen] = useState(false)
-  const [receiveOpen, setReceiveOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [view, setView] = useState<View>('wallet')
-  const openSettings = useCallback(() => setSettingsOpen(true), [])
 
   const { refetch: refetchBalance } = balance
   const { refetch: refetchSpendable } = spendable
@@ -69,7 +67,6 @@ export function Dashboard() {
       toast.info(`Wallet account changed to ${shortAddress(address)}`)
       resetSend()
       dismissSwap()
-      setSendOpen(false)
     }
     previousAddress.current = address
   }, [address, resetSend, dismissSwap])
@@ -84,99 +81,70 @@ export function Dashboard() {
     if (sendPhase === 'confirmed' || sendPhase === 'failed') lastToasted.current = key
   }, [sendPhase, send.state.hash])
 
-  const closeSend = useCallback(() => {
-    setSendOpen(false)
+  // Leaving the Send page drops an unsent review or a finished result, but never an in-flight or unconfirmed payment.
+  useEffect(() => {
+    if (route !== 'send' && !sendBusy && sendPhase !== 'idle' && sendPhase !== 'unconfirmed') resetSend()
+  }, [route, sendBusy, sendPhase, resetSend])
+
+  // The page title follows the page.
+  useEffect(() => {
+    document.title = address ? `${navFor(route).title} · TopPay` : 'TopPay'
+  }, [route, address])
+
+  const finishSend = useCallback(() => {
     if (!sendBusy) resetSend()
-  }, [sendBusy, resetSend])
+    navigate('dashboard')
+  }, [sendBusy, resetSend, navigate])
 
   const received = useMemo(() => history.entries.filter((entry) => entry.direction === 'received'), [history.entries])
-  const trackingSend = !sendOpen && (sendPhase === 'awaiting-wallet' || sendPhase === 'pending' || sendPhase === 'unconfirmed')
+
+  // A payment from this app that the chain has not finished (or that failed): real wallet and chain state only.
+  const localSend: LocalSend | null = useMemo(() => {
+    const { quote, hash, message } = send.state
+    if (!quote) return null
+    const amount = formatUsdcRaw(quote.amount.raw)
+    if (sendPhase === 'awaiting-wallet' || sendPhase === 'pending') return { status: 'pending', amount, to: quote.to, hash, message: sendPhase === 'awaiting-wallet' ? 'Waiting for your wallet.' : 'Waiting for Arc Mainnet to include it.' }
+    if (sendPhase === 'unconfirmed') return { status: 'unconfirmed', amount, to: quote.to, hash, message }
+    if (sendPhase === 'failed' && hash) return { status: 'failed', amount, to: quote.to, hash, message }
+    return null
+  }, [send.state, sendPhase])
 
   if (!isConnected || !address) {
-    return (
-      <div className="min-h-dvh">
-        <Header onOpenSettings={openSettings} />
-        <main className="px-4 pb-16 pt-8 sm:pt-16">
-          {wallet.isConnecting ? (
-            <div className="flex justify-center pt-24">
-              <Loader2 className="size-6 animate-spin" style={{ color: 'var(--subtle)' }} />
-            </div>
-          ) : (
-            <ConnectWallet />
-          )}
-        </main>
-        <Footer />
-        <Sheet open={settingsOpen} title="Settings" onClose={() => setSettingsOpen(false)}>
-          <DeveloperSettings />
-        </Sheet>
-      </div>
-    )
+    return <LandingPage connecting={wallet.isConnecting} />
   }
 
+  const banners = wallet.isWrongNetwork ? (
+    <div role="alert" className="card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--danger)' }}>
+      <p className="flex items-start gap-2 text-sm">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" style={{ color: 'var(--danger)' }} />
+        Your wallet is on a different network. Switch to Arc Mainnet (chain {ARC_MAINNET_CHAIN_ID}) to send. Balance and history still come from Arc Mainnet.
+      </p>
+      <button type="button" className="btn btn-primary shrink-0" onClick={wallet.switchToArc} disabled={wallet.isSwitching}>
+        {wallet.isSwitching && <Loader2 className="size-4 animate-spin" />} Switch network
+      </button>
+      {wallet.switchError && (
+        <p className="text-xs sm:basis-full" style={{ color: 'var(--danger)' }}>
+          Could not switch: approve the request in your wallet, or add Arc Mainnet manually.
+        </p>
+      )}
+    </div>
+  ) : null
+
   return (
-    <div className="min-h-dvh">
-      <Header address={address} connectorName={wallet.connectorName} onOpenSettings={openSettings} />
-      <main className="mx-auto w-full max-w-2xl space-y-3 px-4 pb-6 sm:space-y-4">
-        {wallet.isWrongNetwork && (
-          <div role="alert" className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--danger)' }}>
-            <p className="flex items-start gap-2 text-sm">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" style={{ color: 'var(--danger)' }} />
-              Your wallet is on a different network. Switch to Arc Mainnet (chain {ARC_MAINNET_CHAIN_ID}) to send. Balance and history below still come from Arc Mainnet.
-            </p>
-            <button type="button" className="btn btn-primary shrink-0" onClick={wallet.switchToArc} disabled={wallet.isSwitching}>
-              {wallet.isSwitching && <Loader2 className="size-4 animate-spin" />} Switch network
-            </button>
-            {wallet.switchError && (
-              <p className="text-xs sm:basis-full" style={{ color: 'var(--danger)' }}>
-                Could not switch: approve the request in your wallet, or add Arc Mainnet manually.
-              </p>
-            )}
-          </div>
-        )}
-
-        <ViewTabs view={view} onChange={setView} />
-
-        {view === 'swap' ? (
-          <SwapPanel swap={swap} />
-        ) : (
-          <>
-          <BalanceCard
-            address={address}
-            balance={balance.data}
-            loading={balance.isLoading}
-            failed={balance.isError && balance.data === undefined}
-            onRetry={() => void balance.refetch()}
-          />
-
-          <ActionCards
-            onSend={() => setSendOpen(true)}
-            onReceive={() => setReceiveOpen(true)}
-            sendDisabled={balance.data === undefined}
-          />
-
-          {trackingSend && (
-            <button
-              type="button"
-              onClick={() => setSendOpen(true)}
-              className="card flex w-full items-center justify-between gap-3 p-4 text-left text-sm"
-            >
-              <span className="flex items-center gap-2 font-semibold">
-                <StatusBadge status={sendPhase === 'unconfirmed' ? 'unconfirmed' : 'pending'} />
-                {sendPhase === 'unconfirmed' ? 'Payment not confirmed yet' : 'Payment in progress'}
-              </span>
-              <span style={{ color: 'var(--accent-hover)' }}>View</span>
-            </button>
-          )}
-
-          <TransactionList history={history} />
-          <NetworkInfo onOpenSettings={openSettings} />
-          </>
-        )}
-      </main>
-      <Footer />
-
-      <Sheet open={sendOpen} title="Send USDC" onClose={closeSend}>
-        <SendSheet
+    <AppShell route={route} address={address} connectorName={wallet.connectorName} banners={banners}>
+      {route === 'dashboard' && (
+        <DashboardPage
+          address={address}
+          balance={balance.data}
+          balanceLoading={balance.isLoading}
+          balanceFailed={balance.isError && balance.data === undefined}
+          onRetryBalance={() => void balance.refetch()}
+          history={history}
+          localSend={localSend}
+        />
+      )}
+      {route === 'send' && (
+        <SendPage
           sender={address}
           usdcBalance={balance.data}
           nativeBalance={spendable.data?.value}
@@ -184,17 +152,14 @@ export function Dashboard() {
           switching={wallet.isSwitching}
           onSwitchNetwork={wallet.switchToArc}
           send={send}
-          onDone={closeSend}
+          onDone={finishSend}
         />
-      </Sheet>
-
-      <Sheet open={settingsOpen} title="Settings" onClose={() => setSettingsOpen(false)}>
-        <DeveloperSettings />
-      </Sheet>
-
-      <Sheet open={receiveOpen} title="Receive USDC" onClose={() => setReceiveOpen(false)}>
-        <ReceiveSheet address={address} balance={balance.data} incoming={received} />
-      </Sheet>
-    </div>
+      )}
+      {route === 'receive' && <ReceivePage address={address} balance={balance.data} incoming={received} />}
+      {route === 'swap' && <SwapPage swap={swap} />}
+      {route === 'bridge' && <BridgePage />}
+      {route === 'activity' && <ActivityPage history={history} localSend={localSend} />}
+      {route === 'settings' && <SettingsPage address={address} connectorName={wallet.connectorName} />}
+    </AppShell>
   )
 }

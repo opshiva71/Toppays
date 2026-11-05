@@ -11,7 +11,7 @@ export function SwapRiskInfo({ open, onClose }: SwapRiskInfoProps) {
   return (
     <Sheet open={open} title="Before you swap" onClose={onClose}>
       <div className="space-y-4 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm leading-relaxed">
-        <p className="rounded-xl p-3" style={{ background: 'rgba(154,91,0,0.1)', color: 'var(--warning)' }}>
+        <p className="rounded-xl p-3" style={{ background: 'rgba(251,191,36,0.1)', color: 'var(--warning)' }}>
           Swaps use real funds on Arc Mainnet and cannot be reversed. Prices can move before your swap confirms. Check the amounts, the minimum received and the price impact before you approve in your wallet.
         </p>
 

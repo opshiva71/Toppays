@@ -54,7 +54,7 @@ export function SwapStatus({ execution, tokenOut, onDismiss }: SwapStatusProps) 
 
   if (phase === 'confirmed') {
     return (
-      <div className="space-y-3 rounded-2xl p-4 text-sm" style={{ background: 'rgba(26,128,71,0.08)' }} role="status" aria-live="polite">
+      <div className="space-y-3 rounded-2xl p-4 text-sm" style={{ background: 'rgba(52,211,153,0.1)' }} role="status" aria-live="polite">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="size-5" style={{ color: 'var(--success)' }} />
           <StatusBadge status="confirmed" label="Swap confirmed" />
@@ -86,7 +86,7 @@ export function SwapStatus({ execution, tokenOut, onDismiss }: SwapStatusProps) 
 
   const status = phase === 'rejected' ? 'cancelled' : phase === 'unconfirmed' ? 'unconfirmed' : 'failed'
   return (
-    <div className="space-y-2 rounded-2xl p-4 text-sm" style={{ background: phase === 'rejected' ? 'var(--surface-muted)' : 'rgba(186,43,76,0.08)' }} role="alert">
+    <div className="space-y-2 rounded-2xl p-4 text-sm" style={{ background: phase === 'rejected' ? 'var(--surface-muted)' : 'rgba(248,113,113,0.1)' }} role="alert">
       <div className="flex items-center gap-2">
         <AlertTriangle className="size-4" style={{ color: phase === 'rejected' ? 'var(--muted)' : 'var(--danger)' }} />
         {execution.reason === 'rpc' ? <StatusBadge status="pending" label="Could not simulate" /> : <StatusBadge status={status} />}
@@ -113,7 +113,7 @@ export function SwapStatus({ execution, tokenOut, onDismiss }: SwapStatusProps) 
 function TechnicalDetails({ lines }: { lines: readonly string[] }) {
   const text = lines.join('\n')
   return (
-    <details className="rounded-xl p-3 text-xs" style={{ background: 'rgba(255,255,255,0.6)' }}>
+    <details className="rounded-xl p-3 text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>
       <summary className="cursor-pointer font-semibold">Technical details</summary>
       <pre className="mono mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-all text-[11px] leading-relaxed">{text}</pre>
       <button

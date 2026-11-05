@@ -1,8 +1,10 @@
-import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, RefreshCw, XCircle } from 'lucide-react'
+import { Check, Copy, ExternalLink, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
 import { buildTxExplorerUrl } from '@/onchain-facts'
 import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
-import { formatUsdcRaw, shortAddress } from '@/lib/format'
+import { copyText, formatUsdcRaw, shortAddress } from '@/lib/format'
 import type { useSendUsdc } from '@/hooks/useSendUsdc'
+import { FailureMark, ProcessingOrb, SuccessCheck } from './StatusAnimations'
 import { StatusBadge, type BadgeStatus } from './StatusBadge'
 
 interface SendStatusProps {
@@ -17,7 +19,8 @@ export function SendStatus({ send, onDone }: SendStatusProps) {
   const explorerUrl = hash ? buildTxExplorerUrl(ARC_MAINNET_CHAIN_ID, hash) : null
   const summary = quote ? `${formatUsdcRaw(quote.amount.raw)} USDC to ${shortAddress(quote.to, 8, 6)}` : ''
 
-  let icon = <Loader2 className="size-9 animate-spin" style={{ color: 'var(--accent-hover)' }} />
+  const [copied, setCopied] = useState(false)
+  let icon = <ProcessingOrb />
   let title = ''
   let body = ''
 
@@ -31,22 +34,22 @@ export function SendStatus({ send, onDone }: SendStatusProps) {
       body = 'Submitted to Arc Mainnet. Waiting for it to be included in a block.'
       break
     case 'confirmed':
-      icon = <CheckCircle2 className="size-9" style={{ color: 'var(--success)' }} />
+      icon = <SuccessCheck />
       title = 'Payment confirmed'
       body = state.blockNumber !== undefined ? `Included in block ${state.blockNumber.toString()}. Arc finality is immediate.` : 'Included onchain.'
       break
     case 'failed':
-      icon = <XCircle className="size-9" style={{ color: 'var(--danger)' }} />
+      icon = <FailureMark />
       title = 'Payment failed'
       body = state.message ?? 'The payment did not go through.'
       break
     case 'rejected':
-      icon = <XCircle className="size-9" style={{ color: 'var(--subtle)' }} />
+      icon = <FailureMark cancelled />
       title = 'Cancelled in wallet'
       body = state.message ?? 'You rejected the request. Nothing was sent.'
       break
     case 'unconfirmed':
-      icon = <AlertTriangle className="size-9" style={{ color: 'var(--warning)' }} />
+      icon = <FailureMark warning />
       title = 'Not confirmed yet'
       body = state.message ?? 'Status unknown.'
       break
@@ -91,17 +94,26 @@ export function SendStatus({ send, onDone }: SendStatusProps) {
         <div className="inner space-y-2 p-3 text-left">
           <span className="label">Transaction hash</span>
           <p className="mono break-all text-xs">{hash}</p>
-          {explorerUrl && (
-            <a
-              href={explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-semibold"
-              style={{ color: 'var(--accent-hover)' }}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              className="btn btn-secondary !min-h-11 !gap-1.5 !rounded-xl !px-3 text-xs"
+              onClick={() => {
+                void copyText(hash).then((ok) => {
+                  if (!ok) return
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1500)
+                })
+              }}
             >
-              View on explorer <ExternalLink className="size-3" />
-            </a>
-          )}
+              {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {copied ? 'Copied' : 'Copy hash'}
+            </button>
+            {explorerUrl && (
+              <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary !min-h-11 !gap-1.5 !rounded-xl !px-3 text-xs">
+                View on Arc Explorer <ExternalLink className="size-3.5" />
+              </a>
+            )}
+          </div>
         </div>
       )}
 
