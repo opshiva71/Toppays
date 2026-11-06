@@ -11,7 +11,8 @@
     <meta property="og:title" content="TopPay" />
     <meta property="og:description" content="Send. Receive. Move Money. USDC payments and swaps on Arc Mainnet." />
     <meta name="theme-color" content="#080d1b" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
+    <script src="/theme-init.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,6 +23,22 @@
       html,
       body {
         background: #080d1b;
+      }
+      html[data-theme='light'],
+      html[data-theme='light'] body {
+        background: #f4f6fb;
+      }
+      html[data-theme='light'] #boot {
+        background:
+          radial-gradient(520px 320px at 20% 0%, rgba(59, 130, 246, 0.16), transparent 70%),
+          radial-gradient(480px 320px at 90% 100%, rgba(124, 58, 237, 0.12), transparent 70%), #f4f6fb;
+        color: #0b1220;
+      }
+      html[data-theme='light'] #boot .boot-tag {
+        color: #54627a;
+      }
+      html[data-theme='light'] #boot .boot-bar {
+        background: rgba(15, 23, 42, 0.1);
       }
       /* Boot screen: pure CSS, so it shows before any script runs. The app removes it once it has mounted. */
       #boot {

@@ -65,7 +65,7 @@ export function SwapPanel({ swap }: { swap: SwapApi }) {
                 onClick={() => setRiskOpen(true)}
                 aria-label="Swap risks: read before you swap"
                 aria-haspopup="dialog"
-                className="-my-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                className="-my-2 inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-hover)]"
                 style={{ color: 'var(--muted)' }}
               >
                 <Info className="size-5" />

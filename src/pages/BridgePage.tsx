@@ -167,7 +167,7 @@ export function BridgePage() {
                   type="button"
                   onClick={() => choose(network)}
                   aria-pressed={selected}
-                  className="inner flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.07]"
+                  className="inner flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--fill-hover)]"
                   style={selected ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent)' } : undefined}
                 >
                   <Monogram network={network} />
@@ -194,7 +194,7 @@ function NetworkCard({ label, network, onClick }: { label: string; network: Brid
       type="button"
       onClick={onClick}
       aria-label={`${label} network: ${network.name}. Change`}
-      className="inner flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.07]"
+      className="inner flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--fill-hover)]"
     >
       <Monogram network={network} size={44} />
       <span className="min-w-0 flex-1">

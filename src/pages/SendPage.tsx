@@ -27,7 +27,7 @@ export function SendPage(props: SendPageProps) {
             <span className="label">Available balance</span>
             <p className="display mt-1 text-2xl font-bold tabular-nums">{usdcBalance === undefined ? '…' : formatUsdcRaw(usdcBalance)}</p>
           </div>
-          <span className="chip px-3 py-1.5 text-xs font-semibold">
+          <span className="chip shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-semibold">
             <TokenUSDC variant="branded" size={16} /> USDC · Arc Mainnet
           </span>
         </section>

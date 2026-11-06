@@ -12,7 +12,7 @@ export function NetworkPill({ compact = false, tone = 'default' }: { compact?: b
       style={
         tone === 'light'
           ? { borderColor: 'rgba(255,255,255,0.22)', background: 'rgba(8,13,27,0.28)', color: '#fff' }
-          : { borderColor: 'var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--ink-2)' }
+          : { borderColor: 'var(--border)', background: 'var(--fill)', color: 'var(--ink-2)' }
       }
       title={state === 'ok' ? 'Connected to Arc Mainnet (chain 5042)' : undefined}
     >

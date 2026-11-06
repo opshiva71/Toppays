@@ -8,7 +8,7 @@ export function BottomNav({ route }: { route: Route }) {
       className="fixed inset-x-0 bottom-0 z-40 border-t px-1.5 pt-1.5 lg:hidden"
       style={{
         borderColor: 'var(--border)',
-        background: 'rgba(8,13,27,0.9)',
+        background: 'var(--bar-bg)',
         backdropFilter: 'blur(20px) saturate(160%)',
         WebkitBackdropFilter: 'blur(20px) saturate(160%)',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',

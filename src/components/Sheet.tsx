@@ -36,18 +36,18 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
           transition={{ duration: 0.15 }}
           onClick={onClose}
         >
-          <div className="absolute inset-0 bg-[#02050d]/70 backdrop-blur-sm" />
+          <div className="absolute inset-0 backdrop-blur-sm" style={{ background: 'var(--overlay)' }} />
           <motion.section
             role="dialog"
             aria-modal="true"
             aria-label={title}
             className="relative max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl sm:rounded-3xl"
             style={{
-              background: 'linear-gradient(180deg, rgba(23,35,58,0.98), rgba(13,20,37,0.98))',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--sheet-bg)',
+              border: '1px solid var(--sheet-border)',
               backdropFilter: 'blur(40px) saturate(160%)',
               WebkitBackdropFilter: 'blur(40px) saturate(160%)',
-              boxShadow: '0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(96,165,250,0.06)',
+              boxShadow: 'var(--sheet-shadow)',
             }}
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

@@ -31,7 +31,7 @@ export function TokenSelect({ open, title, selected, other, balances, onSelect, 
                   onClose()
                 }}
                 aria-pressed={isSelected}
-                className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-white/10"
+                className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-[var(--fill-hover)]"
                 style={isSelected ? { background: 'rgba(96,165,250,0.12)' } : undefined}
               >
                 <TokenIcon symbol={token.symbol} size={36} />

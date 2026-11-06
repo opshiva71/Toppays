@@ -28,7 +28,7 @@ import { SwapPage } from './SwapPage'
 export function Dashboard() {
   const wallet = useArcWallet()
   const { address, isConnected } = wallet
-  const { route, navigate } = useRoute()
+  const { route, navigate, back } = useRoute()
   const balance = useUsdcBalance(address)
   const spendable = useSpendableNative(address)
 
@@ -131,7 +131,7 @@ export function Dashboard() {
   ) : null
 
   return (
-    <AppShell route={route} address={address} connectorName={wallet.connectorName} banners={banners}>
+    <AppShell route={route} address={address} connectorName={wallet.connectorName} banners={banners} onBack={back}>
       {route === 'dashboard' && (
         <DashboardPage
           address={address}

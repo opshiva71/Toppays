@@ -39,7 +39,7 @@ export function SuccessCheck() {
 export function FailureMark({ cancelled = false, warning = false }: { cancelled?: boolean; warning?: boolean }) {
   const color = warning ? 'var(--warning)' : cancelled ? 'var(--subtle)' : 'var(--danger)'
   return (
-    <span className="shake flex size-20 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${color}`, animation: 'shake 360ms ease-in-out 1' }} role="img" aria-label={warning ? 'Not confirmed' : cancelled ? 'Cancelled' : 'Failed'}>
+    <span className="shake flex size-20 items-center justify-center rounded-full" style={{ background: 'var(--fill)', border: `1px solid ${color}`, animation: 'shake 360ms ease-in-out 1' }} role="img" aria-label={warning ? 'Not confirmed' : cancelled ? 'Cancelled' : 'Failed'}>
       {warning ? <AlertTriangle className="size-9" style={{ color }} /> : <XCircle className="size-9" style={{ color }} />}
     </span>
   )

@@ -10,6 +10,7 @@
  *  https://studio.arc.io
  */
 
+import './lib/theme'
 import './tracing'
 import './console-capture'
 
@@ -17,7 +18,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
+import { ThemedToaster } from './components/ThemedToaster'
 import { config } from './config'
 import App from './App'
 import { installShareSync } from './lib/share'
@@ -74,7 +75,7 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <App />
         <StudioWatermark />
-        <Toaster position="top-center" theme="dark" offset={76} mobileOffset={68} />
+        <ThemedToaster />
       </QueryClientProvider>
     </WagmiProvider>
   </StrictMode>,

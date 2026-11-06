@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useDisconnect } from 'wagmi'
-import { Check, Copy, ExternalLink, LogOut, Moon, ShieldCheck } from 'lucide-react'
+import { Check, Copy, ExternalLink, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { buildAddressExplorerUrl } from '@/onchain-facts'
 import { ARC_EXPLORER_URL, ARC_MAINNET_CHAIN_ID } from '../../config/network'
 import { useRpcHealth } from '@/hooks/useArc'
 import { avatarGradient } from '@/lib/avatar'
 import { copyText } from '@/lib/format'
 import { DeveloperSettings, Row, Section } from '@/components/DeveloperSettings'
+import { ThemeSwitch } from '@/components/ThemeToggle'
+import { useTheme } from '@/lib/theme'
 
 interface SettingsPageProps {
   address: string
@@ -24,6 +26,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 export function SettingsPage({ address, connectorName }: SettingsPageProps) {
   const { disconnect } = useDisconnect()
+  const { theme } = useTheme()
   const { data: health } = useRpcHealth()
   const [copied, setCopied] = useState(false)
 
@@ -86,19 +89,19 @@ export function SettingsPage({ address, connectorName }: SettingsPageProps) {
       </Card>
 
       <Card title="Appearance">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="tile-icon !size-10 !rounded-xl" aria-hidden="true">
-              <Moon className="size-5" />
+              {theme === 'dark' ? <Moon className="size-5" /> : <Sun className="size-5" />}
             </span>
             <div>
-              <p className="text-sm font-semibold">Dark Premium</p>
+              <p className="text-sm font-semibold">{theme === 'dark' ? 'Dark Premium' : 'Light'} theme</p>
               <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                The TopPay theme, used everywhere.
+                Dark is the default. Your choice is remembered on this device.
               </p>
             </div>
           </div>
-          <span className="badge badge-success">Active</span>
+          <ThemeSwitch />
         </div>
       </Card>
 

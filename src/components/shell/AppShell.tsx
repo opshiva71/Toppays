@@ -11,17 +11,18 @@ interface AppShellProps {
   address: string
   connectorName?: string
   banners?: ReactNode
+  onBack: () => void
   children: ReactNode
 }
 
 /** Desktop: sidebar + top bar. Mobile: compact top bar + bottom navigation. Pages fade and slide in. */
-export function AppShell({ route, address, connectorName, banners, children }: AppShellProps) {
+export function AppShell({ route, address, connectorName, banners, onBack, children }: AppShellProps) {
   const reduce = useReducedMotion()
   return (
     <div className="min-h-dvh lg:flex">
       <Sidebar route={route} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar route={route} address={address} connectorName={connectorName} />
+        <TopBar route={route} address={address} connectorName={connectorName} onBack={onBack} />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-32 pt-5 lg:px-8 lg:pb-12 lg:pt-8">
           {banners}
           {/* Pages without their own heading get one here: visible on phones, screen-reader only beside the desktop top bar. */}

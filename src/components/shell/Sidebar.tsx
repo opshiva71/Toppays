@@ -11,7 +11,7 @@ export function Sidebar({ route }: { route: Route }) {
   return (
     <aside
       className="sticky top-0 hidden h-dvh w-[264px] shrink-0 flex-col justify-between border-r px-5 py-6 lg:flex"
-      style={{ borderColor: 'var(--border)', background: 'rgba(13,20,37,0.72)', backdropFilter: 'blur(18px)' }}
+      style={{ borderColor: 'var(--border)', background: 'var(--side-bg)', backdropFilter: 'blur(18px)' }}
       aria-label="Sidebar"
     >
       <div>

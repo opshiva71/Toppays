@@ -113,7 +113,7 @@ export function SwapStatus({ execution, tokenOut, onDismiss }: SwapStatusProps) 
 function TechnicalDetails({ lines }: { lines: readonly string[] }) {
   const text = lines.join('\n')
   return (
-    <details className="rounded-xl p-3 text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>
+    <details className="rounded-xl p-3 text-xs" style={{ background: 'var(--fill)' }}>
       <summary className="cursor-pointer font-semibold">Technical details</summary>
       <pre className="mono mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-all text-[11px] leading-relaxed">{text}</pre>
       <button

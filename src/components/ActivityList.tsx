@@ -253,7 +253,7 @@ function TxRow({ entry, full, index }: { entry: HistoryEntry; full: boolean; ind
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${received ? 'Received' : 'Sent'} ${amount} USDC ${received ? 'from' : 'to'} ${entry.counterparty}. Open transaction on the explorer`}
-          className="group grid min-h-[68px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-white/[0.05]"
+          className="group grid min-h-[68px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-[var(--fill)]"
         >
           {icon}
           <span className="min-w-0">

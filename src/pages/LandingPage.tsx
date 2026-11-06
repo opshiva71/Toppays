@@ -2,6 +2,7 @@ import { Loader2, ShieldCheck, Zap, ArrowLeftRight } from 'lucide-react'
 import { ConnectWallet } from '@/components/ConnectWallet'
 import { Wordmark } from '@/components/Logo'
 import { NetworkPill } from '@/components/shell/NetworkPill'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const FEATURES = [
   { Icon: Zap, title: 'Instant USDC', body: 'Send and receive on Arc Mainnet with finality in a block.' },
@@ -15,7 +16,10 @@ export function LandingPage({ connecting }: { connecting: boolean }) {
     <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-16 pt-5 lg:px-8">
       <header className="flex items-center justify-between">
         <Wordmark />
-        <NetworkPill compact />
+        <span className="flex items-center gap-2">
+          <NetworkPill compact />
+          <ThemeToggle />
+        </span>
       </header>
 
       <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-2 lg:gap-16 lg:py-16">

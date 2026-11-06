@@ -1,6 +1,6 @@
 # TopPay
 
-TopPay: Send. Receive. Move Money. A premium dark-themed wallet for USDC on Arc Mainnet, used from a browser wallet such as MetaMask. It shows your real USDC balance, a QR code to receive payments, swaps through Uniswap, and your sent and received transactions read from the chain.
+TopPay: Send. Receive. Move Money. A premium wallet (dark by default, with a light theme) for USDC on Arc Mainnet, used from a browser wallet such as MetaMask. It shows your real USDC balance, a QR code to receive payments, swaps through Uniswap, and your sent and received transactions read from the chain.
 
 Built with [Arc Studio](https://studio.arc.io)
 
@@ -10,7 +10,8 @@ Built with [Arc Studio](https://studio.arc.io)
 
 ## Features
 
-- Dark premium design with a sidebar on desktop and a bottom navigation bar on phones: Dashboard, Send, Receive, Swap, Bridge, Activity and Settings (each page has its own address, for example `#/send`)
+- Dark and light themes: switch from the top bar or Settings; the choice is remembered on the device. Every page except the dashboard has a Back button
+- Premium design with a sidebar on desktop and a bottom navigation bar on phones: Dashboard, Send, Receive, Swap, Bridge, Activity and Settings (each page has its own address, for example `#/send`)
 - Bridge screen is a preview only: it is marked Coming soon and never shows quotes or moves funds until a real bridge is connected
 
 - Connect MetaMask or another browser wallet; the app reacts to account and network changes
