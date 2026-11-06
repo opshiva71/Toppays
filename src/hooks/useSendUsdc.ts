@@ -4,6 +4,7 @@ import type { Hash } from 'viem'
 import { ARC_MAINNET_CHAIN_ID, RECEIPT_SETTINGS } from '../../config/network'
 import { publicClient } from '@/services/rpc'
 import { classifyError } from '@/services/errors'
+import { assertPaymentTx } from '@/services/toppayPayment'
 import { QuoteError, buildQuote, validateAmount, validateRecipient, type SendQuote } from '@/services/send'
 
 export type SendPhase =
@@ -52,7 +53,7 @@ export function useSendUsdc(options: { onConfirmed?: () => void } = {}) {
   }, [])
 
   const prepare = useCallback(
-    async (recipientInput: string, amountInput: string) => {
+    async (recipientInput: string, amountInput: string, memoInput = '') => {
       if (inFlight.current || !address) return
       const recipient = validateRecipient(recipientInput, address)
       const amount = validateAmount(amountInput)
@@ -61,7 +62,7 @@ export function useSendUsdc(options: { onConfirmed?: () => void } = {}) {
 
       setState({ phase: 'quoting' })
       try {
-        const quote = await buildQuote({ from: address, to: recipient.value, amount: amount.value })
+        const quote = await buildQuote({ from: address, to: recipient.value, amount: amount.value, memo: memoInput })
         setState({ phase: 'review', quote })
       } catch (error) {
         const message = error instanceof QuoteError ? error.message : classifyError(error).message
@@ -115,9 +116,18 @@ export function useSendUsdc(options: { onConfirmed?: () => void } = {}) {
     inFlight.current = true
     setState({ phase: 'awaiting-wallet', quote })
     try {
+      if (quote.route === 'contract' && quote.data) {
+        try {
+          assertPaymentTx({ to: quote.txTo, data: quote.data, value: quote.valueNative }, { contract: quote.txTo, recipient: quote.to, memo: quote.memo, value: quote.valueNative })
+        } catch (checkError) {
+          setState({ phase: 'failed', quote, message: checkError instanceof Error ? checkError.message : 'The payment did not match what you reviewed. It was not sent.' })
+          return
+        }
+      }
       const hash = await sendTransactionAsync({
         chainId: ARC_MAINNET_CHAIN_ID,
-        to: quote.to,
+        to: quote.txTo,
+        data: quote.data,
         value: quote.valueNative,
         gas: quote.gas,
         maxFeePerGas: quote.maxFeePerGas,

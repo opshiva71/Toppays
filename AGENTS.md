@@ -47,3 +47,9 @@ bun install
 bun run dev
 bun run check
 ```
+
+## Deployed contract (Arc Mainnet, chain 5042)
+
+- TopPay payments contract (v2): `0x6C24c5cFcB3Dc21509623B321508956300393c04`, deployed from Remix by `0x1788c5E34d92d332a8642Ba5F1C5FE0C7d7c72b1` (the deployer wallet, not an owner: the contract has no owner or admin).
+- Checked onchain: `identifier()` returns `0xb1bfaf41...39a2db`, and the runtime code matches `contracts/TopPay.sol` compiled with solc 0.8.28 and the optimizer OFF (15,140 bytes; ignoring the metadata trailer).
+- App config: `VITE_TOPPAY_CONTRACT_ADDRESS` in `.env` (rebuild to take effect). Send routes payments through this contract (`send(recipient, memo)`) after an onchain check; Swap does not use it. Activity maps the contract's `Payment` receipts back to the real recipient and memo.

@@ -26,7 +26,7 @@ Everything has a safe default. Set variables in your host's environment settings
 | --- | --- |
 | `VITE_ARC_RPC_URL` | Dedicated Arc Mainnet RPC (https), tried first. Recommended for production traffic. |
 | `VITE_ARC_RPC_FALLBACK_URLS` | Comma separated backup RPCs (https). |
-| `VITE_TOPPAY_CONTRACT_ADDRESS` | Optional deployed TopPay contract. Leave empty if you have not deployed one. |
+| `VITE_TOPPAY_CONTRACT_ADDRESS` | Your deployed TopPay contract. When set, Send routes payments through it after an onchain check (sending pauses if the check fails). Leave empty to send directly. |
 | `VITE_HISTORY_CHUNK_BLOCKS` | Blocks per history request (default 5000). |
 
 Chain, RPC list and fee settings live in `config/network.ts`. Never put a private key, API key or deployer credential in any `VITE_` variable.

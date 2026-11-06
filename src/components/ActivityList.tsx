@@ -6,6 +6,7 @@ import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
 import { copyText, dayLabel, formatDateTime, formatNativeAsUsdc, formatTime, shortAddress } from '@/lib/format'
 import type { HistoryState } from '@/hooks/useTransactionHistory'
 import type { HistoryEntry } from '@/services/history'
+import { decodeMemo } from '@/services/toppayPayment'
 import { StatusBadge, type BadgeStatus } from './StatusBadge'
 
 const PAGE_SIZE = 25
@@ -49,6 +50,7 @@ function matches(entry: HistoryEntry, query: string): boolean {
   return (
     entry.txHash.toLowerCase().includes(q) ||
     entry.counterparty.toLowerCase().includes(q) ||
+    (decodeMemo(entry.memo) ?? '').toLowerCase().includes(q) ||
     formatNativeAsUsdc(entry.amountNative).includes(q) ||
     entry.direction.includes(q)
   )
@@ -218,6 +220,7 @@ function TxRow({ entry, full, index }: { entry: HistoryEntry; full: boolean; ind
   const received = entry.direction === 'received'
   const amount = formatNativeAsUsdc(entry.amountNative)
   const url = buildTxExplorerUrl(ARC_MAINNET_CHAIN_ID, entry.txHash)
+  const memoText = decodeMemo(entry.memo)
   const when = entry.timestamp ? (full ? formatDateTime(entry.timestamp) : formatTime(entry.timestamp)) : `Block ${entry.blockNumber.toString()}`
 
   const copyHash = async () => {
@@ -267,6 +270,11 @@ function TxRow({ entry, full, index }: { entry: HistoryEntry; full: boolean; ind
               </span>{' '}
               · {when}
             </span>
+            {memoText && (
+              <span className="mt-0.5 block truncate text-xs italic" style={{ color: 'var(--subtle)' }}>
+                “{memoText}”
+              </span>
+            )}
           </span>
           <span className="text-right">{amountNode}</span>
         </a>
@@ -291,6 +299,16 @@ function TxRow({ entry, full, index }: { entry: HistoryEntry; full: boolean; ind
           <span className="mono mt-0.5 block truncate text-xs" style={{ color: 'var(--muted)' }} title={entry.counterparty}>
             {received ? 'from' : 'to'} {shortAddress(entry.counterparty, 8, 6)}
           </span>
+          {(entry.viaContract || memoText) && (
+            <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" style={{ color: 'var(--subtle)' }}>
+              {entry.viaContract && (
+                <span className="chip px-2 py-0.5 font-semibold" style={{ color: 'var(--accent-hover)' }}>
+                  via TopPay
+                </span>
+              )}
+              {memoText && <span className="truncate italic">“{memoText}”</span>}
+            </span>
+          )}
         </span>
         <span className="text-right">
           {amountNode}

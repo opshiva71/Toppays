@@ -19,7 +19,9 @@
     "test:swap-fork": "bun run ./scripts/test-swap-fork.ts",
     "contracts:build": "forge build",
     "contracts:test": "forge test",
-    "test:rpc": "bun run ./scripts/test-rpc.ts"
+    "test:rpc": "bun run ./scripts/test-rpc.ts",
+    "test:send": "VITE_TOPPAY_CONTRACT_ADDRESS=0x6C24c5cFcB3Dc21509623B321508956300393c04 bun run ./scripts/test-send.ts",
+    "verify:toppay": "VITE_TOPPAY_CONTRACT_ADDRESS=0x6C24c5cFcB3Dc21509623B321508956300393c04 bun run ./scripts/verify-toppay.ts"
   },
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^10.8.1",

@@ -3,11 +3,13 @@
  * signs or submits a transaction.
  */
 
-import { getAddress, isAddress, zeroAddress, type Address } from 'viem'
+import { getAddress, isAddress, zeroAddress, type Address, type Hex } from 'viem'
 import { AmountError, parseAmount, usdcToGasToken, type Amount } from '@/onchain-money'
 import { ARC_MAINNET_CHAIN_ID, ARC_SYSTEM_TRANSFER_EMITTER, ARC_USDC, MIN_MAX_FEE_PER_GAS } from '../../config/network'
 import { publicClient, withRpcRetry } from './rpc'
 import { classifyError } from './errors'
+import { TOPPAY_CONTRACT } from '../../config/contract'
+import { assertPaymentTx, buildPaymentCall, encodeMemo, explainTopPayRevert, resolvePaymentRoute } from './toppayPayment'
 
 export type Validation<T> = { ok: true; value: T } | { ok: false; message: string; empty?: boolean }
 
@@ -23,6 +25,9 @@ export function validateRecipient(input: string, sender?: Address): Validation<A
   if (sender && address === getAddress(sender)) return { ok: false, message: 'You cannot send to your own address.' }
   if (address === getAddress(ARC_USDC.address) || address === getAddress(ARC_SYSTEM_TRANSFER_EMITTER)) {
     return { ok: false, message: 'This is a protocol address, not a wallet. Funds sent here would be lost.' }
+  }
+  if (TOPPAY_CONTRACT.state === 'configured' && address === TOPPAY_CONTRACT.address) {
+    return { ok: false, message: 'This is the TopPay payments contract, not a wallet. Enter the person you want to pay.' }
   }
   return { ok: true, value: address }
 }
@@ -79,7 +84,17 @@ export async function getFees(): Promise<Fees> {
 
 export interface SendQuote {
   from: Address
+  /** The recipient: who ends up with the money. */
   to: Address
+  /** 'contract': sent through the TopPay contract (it forwards 100% to `to` and logs a receipt). 'direct': a plain transfer. */
+  route: 'contract' | 'direct'
+  /** What the wallet is asked to sign: the TopPay contract for a routed payment, otherwise the recipient. */
+  txTo: Address
+  /** Calldata for a routed payment (send(recipient, memo)); undefined for a direct transfer. */
+  data?: Hex
+  /** The reviewed memo as bytes32 (zero when none) and as text. */
+  memo: Hex
+  memoText: string
   /** 6-decimal ERC-20 view, as typed by the user. */
   amount: Amount
   /** Same funds in the 18-decimal native view: what is actually sent as the transaction value. */
@@ -102,9 +117,28 @@ export class QuoteError extends Error {
   }
 }
 
-export async function buildQuote(params: { from: Address; to: Address; amount: Amount }): Promise<SendQuote> {
+export function validateMemo(input: string): Validation<string> {
+  const result = encodeMemo(input)
+  return result.ok ? { ok: true, value: result.text } : { ok: false, message: result.message }
+}
+
+export async function buildQuote(params: { from: Address; to: Address; amount: Amount; memo?: string }): Promise<SendQuote> {
   const { from, to, amount } = params
   const valueNative = usdcToGasToken(ARC_MAINNET_CHAIN_ID, amount).raw
+
+  const encoded = encodeMemo(params.memo ?? '')
+  if (!encoded.ok) throw new QuoteError('rejected-by-network', encoded.message)
+
+  let route: Awaited<ReturnType<typeof resolvePaymentRoute>>
+  try {
+    route = await resolvePaymentRoute()
+  } catch (error) {
+    throw new QuoteError('network', error instanceof Error ? error.message : 'The payments contract could not be checked.')
+  }
+  const routed = route.mode === 'contract'
+  const txTo: Address = route.mode === 'contract' ? route.contract : to
+  const data: Hex | undefined = routed ? buildPaymentCall(to, encoded.hex) : undefined
+  if (!routed && encoded.text) throw new QuoteError('rejected-by-network', 'A memo needs the TopPay contract, which is not configured. Remove the memo to send directly.')
 
   let code: string | undefined
   let nativeBalance: bigint
@@ -130,8 +164,10 @@ export async function buildQuote(params: { from: Address; to: Address; amount: A
 
   let gas: bigint
   try {
-    gas = await withRpcRetry(() => publicClient.estimateGas({ account: from, to, value: valueNative }))
+    gas = await withRpcRetry(() => publicClient.estimateGas({ account: from, to: txTo, data, value: valueNative }))
   } catch (error) {
+    const routedReason = routed ? explainTopPayRevert(error) : null
+    if (routedReason) throw new QuoteError('rejected-by-network', routedReason)
     const classified = classifyError(error)
     if (classified.kind === 'insufficient-funds') {
       throw new QuoteError('insufficient-gas', 'Your balance cannot cover the amount plus the network fee.')
@@ -146,7 +182,8 @@ export async function buildQuote(params: { from: Address; to: Address; amount: A
   if (gas > MAX_SANE_GAS) {
     throw new QuoteError('rejected-by-network', 'The gas estimate for this transfer is unexpectedly high. It was not sent.')
   }
-  const paddedGas = (gas * 110n) / 100n
+  // A routed payment forwards gas to the recipient inside the contract, so it gets a larger margin (63/64 rule).
+  const paddedGas = routed ? (gas * 125n) / 100n : (gas * 110n) / 100n
   const maxFeeNative = paddedGas * fees.maxFeePerGas
   if (nativeBalance < valueNative + maxFeeNative) {
     throw new QuoteError(
@@ -155,9 +192,19 @@ export async function buildQuote(params: { from: Address; to: Address; amount: A
     )
   }
 
+  if (routed) {
+    // Defence in depth: the exact transaction the wallet will be asked to sign must match what was reviewed.
+    assertPaymentTx({ to: txTo, data: data as Hex, value: valueNative }, { contract: txTo, recipient: to, memo: encoded.hex, value: valueNative })
+  }
+
   return {
     from,
     to,
+    route: routed ? 'contract' : 'direct',
+    txTo,
+    data,
+    memo: encoded.hex,
+    memoText: encoded.text,
     amount,
     valueNative,
     gas: paddedGas,

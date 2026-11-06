@@ -21,6 +21,7 @@ Built with [Arc Studio](https://studio.arc.io)
 - Recent activity grouped by day with Sent/Received filters, status badges and a link to the explorer on every row
 - One-tap copy of your wallet address
 - Swap USDC, EURC, cirBTC and WETH directly on Uniswap V3 on Arc Mainnet: live onchain quotes, pool fee tier, price impact, minimum received, exact-amount approvals and a simulation before every swap (no API key; see `docs/UNISWAP.md`)
+- Send routes payments through your TopPay contract when it is configured: your wallet signs one call, the contract forwards 100% to the recipient and logs a receipt, with an optional public memo. Activity shows the real recipient and memo
 - Compact Arc Mainnet and RPC status on the dashboard; a Settings sheet holds RPC endpoints and the optional receipt contract status
 
 ## Tech stack
@@ -33,6 +34,7 @@ React, TypeScript, Vite, Tailwind CSS, wagmi and viem, qrcode.react, framer-moti
 - `config/contract.ts`, `config/abi.ts`: optional contract address and ABI
 - `src/`: app code (`components/`, `pages/`, `hooks/`, `services/`)
 - `contracts/TopPay.sol`: optional receipt helper contract
+- `scripts/test-send.ts` and `scripts/verify-toppay.ts`: offline and live read-only checks for contract-routed payments (`bun run test:send`, `bun run verify:toppay`)
 - `scripts/deploy-toppay.ts`: deploys the contract from your own wallet
 - `scripts/verify-mainnet.ts`: read-only production checks (no funds, no keys)
 - `docs/UNISWAP.md`: swap setup, security model and testing
@@ -63,7 +65,7 @@ All are optional. See `config/env.example`.
 
 | Name | Purpose |
 | --- | --- |
-| `VITE_TOPPAY_CONTRACT_ADDRESS` | Address of a deployed TopPay contract |
+| `VITE_TOPPAY_CONTRACT_ADDRESS` | Address of your deployed TopPay contract. When set and verified onchain, Send routes payments through it (with an optional memo); when empty, Send makes a direct transfer |
 | `VITE_ARC_RPC_URL` | Your own Arc Mainnet RPC (https), tried first |
 | `VITE_ARC_RPC_FALLBACK_URLS` | Comma separated backup RPCs (https) |
 | `VITE_HISTORY_CHUNK_BLOCKS` | Blocks per history request |

@@ -5,7 +5,9 @@ import type { Address } from 'viem'
 import { Amount, gasTokenToUsdc } from '@/onchain-money'
 import { ARC_MAINNET_CHAIN_ID } from '../../config/network'
 import { formatNativeAsUsdc, formatUsdcRaw, shortAddress } from '@/lib/format'
-import { getFees, sanitizeAmountInput, validateAmount, validateRecipient } from '@/services/send'
+import { getFees, sanitizeAmountInput, validateAmount, validateMemo, validateRecipient } from '@/services/send'
+import { TOPPAY_CONTRACT } from '../../config/contract'
+import { MEMO_MAX_BYTES } from '@/services/toppayPayment'
 import type { useSendUsdc } from '@/hooks/useSendUsdc'
 import { SendStatus } from './SendStatus'
 
@@ -22,10 +24,13 @@ interface SendSheetProps {
 
 /** Gas for a plain transfer (21,000) plus the 10% pad used by the quote. */
 const TRANSFER_GAS_RESERVE = 23_100n
+/** Generous reserve for a payment routed through the TopPay contract (about 100k gas, padded in the quote). */
+const ROUTED_GAS_RESERVE = 140_000n
 
 export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, switching, onSwitchNetwork, send, onDone }: SendSheetProps) {
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
+  const [memo, setMemo] = useState('')
   const [touched, setTouched] = useState({ recipient: false, amount: false })
   const { state, busy, prepare, confirm, backToEdit } = send
 
@@ -33,6 +38,9 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
 
   const recipientCheck = useMemo(() => validateRecipient(recipient, sender), [recipient, sender])
   const amountCheck = useMemo(() => validateAmount(amount), [amount])
+  const memoCheck = useMemo(() => validateMemo(memo), [memo])
+  const routed = TOPPAY_CONTRACT.state === 'configured'
+  const gasReserve = routed ? ROUTED_GAS_RESERVE : TRANSFER_GAS_RESERVE
 
   const aboveBalance =
     amountCheck.ok && usdcBalance !== undefined && amountCheck.value.raw > usdcBalance
@@ -41,12 +49,12 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
 
   const maxAmount = useMemo(() => {
     if (nativeBalance === undefined || !fees) return null
-    const spendable = nativeBalance - TRANSFER_GAS_RESERVE * fees.maxFeePerGas
+    const spendable = nativeBalance - gasReserve * fees.maxFeePerGas
     if (spendable <= 0n) return Amount.zero(6)
     return gasTokenToUsdc(ARC_MAINNET_CHAIN_ID, Amount.fromRaw(spendable, 18), 'trunc')
-  }, [nativeBalance, fees])
+  }, [nativeBalance, fees, gasReserve])
 
-  const canReview = recipientCheck.ok && amountCheck.ok && !aboveBalance && !busy && !isWrongNetwork
+  const canReview = recipientCheck.ok && amountCheck.ok && memoCheck.ok && !aboveBalance && !busy && !isWrongNetwork
 
   // Form view.
   if (state.phase === 'idle' || state.phase === 'quoting') {
@@ -55,7 +63,7 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault()
-          if (canReview) void prepare(recipient, amount)
+          if (canReview) void prepare(recipient, amount, routed ? memo : '')
         }}
       >
         <div>
@@ -122,11 +130,41 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
           )}
         </div>
 
-        <div className="inner flex items-center justify-between gap-3 px-4 py-3 text-xs">
-          <span style={{ color: 'var(--muted)' }}>Estimated network fee</span>
-          <span className="font-semibold tabular-nums">
-            {fees ? `up to ${formatNativeAsUsdc(TRANSFER_GAS_RESERVE * fees.maxFeePerGas)} USDC` : 'Estimating…'}
-          </span>
+        {routed && (
+          <div>
+            <label htmlFor="memo" className="label flex items-center justify-between">
+              <span>Memo (optional)</span>
+              <span className="normal-case tracking-normal" style={{ color: 'var(--subtle)' }}>
+                Public onchain · max {MEMO_MAX_BYTES} bytes
+              </span>
+            </label>
+            <input
+              id="memo"
+              className="field mt-1.5 text-base sm:text-sm"
+              placeholder="For example: Invoice 104"
+              value={memo}
+              onChange={(event) => setMemo(event.target.value)}
+              autoComplete="off"
+              maxLength={64}
+              aria-invalid={!memoCheck.ok}
+            />
+            {!memoCheck.ok && (
+              <p role="alert" className="mt-1.5 text-xs" style={{ color: 'var(--danger)' }}>
+                {memoCheck.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="inner space-y-2 px-4 py-3 text-xs">
+          <div className="flex items-center justify-between gap-3">
+            <span style={{ color: 'var(--muted)' }}>Estimated network fee</span>
+            <span className="font-semibold tabular-nums">{fees ? `up to ${formatNativeAsUsdc(gasReserve * fees.maxFeePerGas)} USDC` : 'Estimating…'}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span style={{ color: 'var(--muted)' }}>Route</span>
+            <span className="text-right font-semibold">{routed ? 'Via TopPay contract · recipient gets 100%' : 'Direct transfer'}</span>
+          </div>
         </div>
 
         {state.message && (
@@ -165,9 +203,22 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
           <Row label="You send">
             <span className="display text-2xl font-bold tabular-nums">{formatUsdcRaw(quote.amount.raw)} USDC</span>
           </Row>
-          <Row label="To">
+          <Row label="Recipient">
             <span className="mono break-all text-right text-xs">{quote.to}</span>
           </Row>
+          {quote.route === 'contract' && (
+            <Row label="Sent through">
+              <span className="text-right">
+                <span className="block text-xs font-semibold">TopPay contract</span>
+                <span className="mono break-all text-[11px]" style={{ color: 'var(--muted)' }}>{quote.txTo}</span>
+              </span>
+            </Row>
+          )}
+          {quote.route === 'contract' && quote.memoText && (
+            <Row label="Memo">
+              <span className="break-all text-right text-xs">{quote.memoText}</span>
+            </Row>
+          )}
           <Row label="From">
             <span className="mono text-xs">{shortAddress(quote.from, 8, 6)}</span>
           </Row>
@@ -196,7 +247,7 @@ export function SendSheet({ sender, usdcBalance, nativeBalance, isWrongNetwork, 
           </li>
           <li className="flex gap-2.5">
             <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--grad)' }}>2</span>
-            Check the details there, then approve. Nothing is sent until you do.
+            Check the details there, then approve. Your wallet may show the TopPay contract as the destination: it forwards 100% to the recipient in the same transaction. Nothing is sent until you approve.
           </li>
           <li className="flex gap-2.5">
             <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--grad)' }}>3</span>

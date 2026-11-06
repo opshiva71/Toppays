@@ -8,11 +8,14 @@
  * reports its own failures.
  */
 
-import { getAddress, parseAbiItem, type Address, type Hash } from 'viem'
+import { getAddress, parseAbiItem, type Address, type Hash, type Hex } from 'viem'
 import { ARC_SYSTEM_TRANSFER_EMITTER, HISTORY_SETTINGS } from '../../config/network'
+import { TOPPAY_CONTRACT } from '../../config/contract'
 import { collectMessages, publicClient, withRpcRetry } from './rpc'
 
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
+
+const PAYMENT_EVENT = parseAbiItem('event Payment(address indexed from, address indexed to, uint256 amount, bytes32 indexed memo)')
 
 export type Direction = 'sent' | 'received'
 
@@ -29,6 +32,61 @@ export interface HistoryEntry {
   amountNative: bigint
   /** Arc finality is deterministic: a log in a block is final. */
   status: 'confirmed'
+  /** Set when the payment went through the TopPay contract: the counterparty is then the real sender or recipient, not the contract. */
+  viaContract?: boolean
+  /** The payment memo (bytes32) from the contract's receipt event, when one was set. */
+  memo?: Hex
+}
+
+export interface PaymentReceipt {
+  txHash: Hash
+  from: Address
+  to: Address
+  amount: bigint
+  memo: Hex
+}
+
+/**
+ * A routed payment shows up in the system log as two transfers: sender to the TopPay contract, and the
+ * contract to the recipient. For the entries that touch the contract, this swaps in the real counterparty
+ * and the memo from the contract's own `Payment` receipt (matched by transaction and exact amount), so the
+ * history reads "Sent to <recipient>" and never "Sent to <contract>". Escrow deposits and anything with no
+ * matching receipt are left exactly as they are.
+ */
+export function applyPayments(entries: HistoryEntry[], payments: PaymentReceipt[], contract: Address, me: Address): HistoryEntry[] {
+  const contractKey = contract.toLowerCase()
+  const meKey = me.toLowerCase()
+  const used = new Set<PaymentReceipt>()
+  return entries.map((entry) => {
+    if (entry.counterparty.toLowerCase() !== contractKey) return entry
+    const match = payments.find(
+      (payment) =>
+        !used.has(payment) &&
+        payment.txHash === entry.txHash &&
+        payment.amount === entry.amountNative &&
+        (entry.direction === 'sent' ? payment.from.toLowerCase() === meKey : payment.to.toLowerCase() === meKey),
+    )
+    if (!match) return entry
+    used.add(match)
+    return { ...entry, counterparty: getAddress(entry.direction === 'sent' ? match.to : match.from), viaContract: true, memo: match.memo }
+  })
+}
+
+async function fetchPayments(me: Address, contract: Address, fromBlock: bigint, toBlock: bigint): Promise<PaymentReceipt[]> {
+  const [outgoing, incoming] = await Promise.all(
+    (['from', 'to'] as const).map((side) =>
+      withRpcRetry(() =>
+        publicClient.getLogs({ address: contract, event: PAYMENT_EVENT, args: side === 'from' ? { from: me } : { to: me }, fromBlock, toBlock }),
+      ),
+    ),
+  )
+  const out: PaymentReceipt[] = []
+  for (const log of [...outgoing, ...incoming]) {
+    const { from, to, amount, memo } = log.args
+    if (!from || !to || amount === undefined || !memo || log.transactionHash === null) continue
+    out.push({ txHash: log.transactionHash, from, to, amount, memo })
+  }
+  return out
 }
 
 let chunkBlocks: number = HISTORY_SETTINGS.chunkBlocks
@@ -130,7 +188,7 @@ export async function scanRange(address: Address, fromBlock: bigint, toBlock: bi
     .slice(0, MAX_TIMESTAMP_FALLBACK_LOOKUPS)
   await Promise.all(missing.map((block) => blockTimestamp(block)))
 
-  return raw.map(({ log, direction, counterparty }) => ({
+  const entries: HistoryEntry[] = raw.map(({ log, direction, counterparty }) => ({
     id: `${log.transactionHash}:${log.logIndex}`,
     txHash: log.transactionHash,
     logIndex: log.logIndex,
@@ -141,6 +199,20 @@ export async function scanRange(address: Address, fromBlock: bigint, toBlock: bi
     amountNative: log.args.value as bigint,
     status: 'confirmed' as const,
   }))
+
+  // Payments routed through the TopPay contract: look up their receipts only when this range touches it.
+  if (TOPPAY_CONTRACT.state === 'configured') {
+    const contract = TOPPAY_CONTRACT.address
+    if (entries.some((entry) => entry.counterparty === contract)) {
+      try {
+        return applyPayments(entries, await fetchPayments(address, contract, fromBlock, toBlock), contract, address)
+      } catch (error) {
+        // A range-size error is handled by the caller (it splits the range); anything else must not hide real transfers.
+        if (isRangeError(error)) throw error
+      }
+    }
+  }
+  return entries
 }
 
 function sortEntries(entries: HistoryEntry[]): HistoryEntry[] {

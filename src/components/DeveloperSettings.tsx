@@ -132,7 +132,7 @@ export function DeveloperSettings({ hideNetwork = false }: { hideNetwork?: boole
         <p className="py-3 text-xs" style={{ color: 'var(--subtle)' }}>
           {contract?.state === 'invalid'
             ? contract.reason
-            : 'The optional TopPay payments contract (v2) adds memo receipts, batch payments, payment requests and escrow. To use one, deploy it yourself, set VITE_TOPPAY_CONTRACT_ADDRESS and rebuild. The app checks the address onchain before showing it as verified.'}
+            : 'When a TopPay payments contract is configured (VITE_TOPPAY_CONTRACT_ADDRESS) and passes the onchain check, Send routes payments through it: your wallet signs one call, the contract forwards 100% to the recipient in the same transaction and logs a receipt with an optional memo. If the check fails, sending pauses instead of falling back silently. Swaps and other pages do not use it.'}
         </p>
       </Section>
     </div>

@@ -67,5 +67,5 @@ Date: 2026-11-01. Target: Arc Mainnet (chain ID 5042). No contract was deployed 
 1. **A real send.** Signing needs a wallet, and no funds were sent. Do a 0.01 USDC send between two wallets you own and watch it reach "Payment confirmed" before launch.
 2. **Real MetaMask UI.** Tested with a scripted wallet, not the extension's own prompts.
 3. **Production RPC capacity.** The public endpoint rate-limits. Set `VITE_ARC_RPC_URL` to a dedicated provider before real traffic.
-4. **Optional contract.** Deploy it yourself only if you want memo receipts, then set `VITE_TOPPAY_CONTRACT_ADDRESS` and confirm the Network panel shows "verified". Consider an independent paid audit if value will flow through it.
+4. **Payments contract.** Deploy it yourself if you want payments routed through your own contract with memo receipts, then set `VITE_TOPPAY_CONTRACT_ADDRESS` and confirm the Network panel shows "verified". Consider an independent paid audit if value will flow through it.
 5. **Reverted sends are not in history.** Only the send flow reports them.
