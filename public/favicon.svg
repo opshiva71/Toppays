@@ -1,13 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 28 28" fill="none">
-  <defs>
-    <linearGradient id="g" x1="2" y1="1" x2="26" y2="27" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3b82f6"/>
-      <stop offset="1" stop-color="#7c3aed"/>
-    </linearGradient>
-  </defs>
-  <rect width="28" height="28" rx="9" fill="url(#g)"/>
-  <rect x="0.5" y="0.5" width="27" height="27" rx="8.5" stroke="rgba(255,255,255,0.3)"/>
-  <path d="M7.5 9.5h13" stroke="#dbeafe" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M14 9.5v9" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="14" cy="21" r="1.5" fill="#fde68a"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#101A33"/><stop offset="1" stop-color="#080D1B"/></linearGradient></defs>
+<rect width="64" height="64" rx="16" fill="url(#bg)"/>
+<rect x="0.5" y="0.5" width="63" height="63" rx="15.5" stroke="rgba(255,255,255,0.14)"/>
+<g transform="translate(5.2 4.7) scale(0.0974)"><g transform="translate(-248 -170)"><defs>
+<linearGradient id="fbar" x1="270" y1="298" x2="640" y2="330" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#63D2F7"/><stop offset="0.55" stop-color="#4BA6F1"/><stop offset="1" stop-color="#2E62DB"/></linearGradient>
+<linearGradient id="ffront" x1="470" y1="236" x2="590" y2="676" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8AB8FF"/><stop offset="0.38" stop-color="#5B8DEE"/><stop offset="0.78" stop-color="#6A4EDB"/><stop offset="1" stop-color="#5230BE"/></linearGradient>
+<linearGradient id="farm" x1="610" y1="298" x2="790" y2="298" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7C5BE6" stop-opacity="0"/><stop offset="1" stop-color="#6A3FD3" stop-opacity="0.95"/></linearGradient>
+<linearGradient id="fstem" x1="500" y1="0" x2="606" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2A1FA6" stop-opacity="0"/><stop offset="1" stop-color="#2A1FA6" stop-opacity="0.6"/></linearGradient>
+<linearGradient id="fsheen" x1="480" y1="228" x2="560" y2="400" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity="0.34"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="fsoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="16"/></filter>
+<clipPath id="fclipBar"><path d="M347.5 220 H650 V375 H347.5 A77.5 77.5 0 0 1 347.5 220 Z"/></clipPath>
+<clipPath id="fclipFront"><path d="M452 603.5 V392 C452 292 528 220 632 220 H710 A77.5 77.5 0 0 1 710 375 H642 C617 375 605 388 605 412 V603.5 A76.5 76.5 0 0 1 452 603.5 Z"/></clipPath>
+</defs>
+<path d="M347.5 220 H650 V375 H347.5 A77.5 77.5 0 0 1 347.5 220 Z" fill="url(#fbar)"/>
+<g clip-path="url(#fclipBar)"><path d="M452 603.5 V392 C452 292 528 220 632 220 H710 A77.5 77.5 0 0 1 710 375 H642 C617 375 605 388 605 412 V603.5 A76.5 76.5 0 0 1 452 603.5 Z" fill="#1B2FB8" fill-opacity="0.6" transform="translate(-14 10)" filter="url(#fsoft)"/></g>
+<path d="M452 603.5 V392 C452 292 528 220 632 220 H710 A77.5 77.5 0 0 1 710 375 H642 C617 375 605 388 605 412 V603.5 A76.5 76.5 0 0 1 452 603.5 Z" fill="url(#ffront)"/>
+<g clip-path="url(#fclipFront)"><rect x="548" y="430" width="70" height="260" fill="#2A1FA6" fill-opacity="0.62" filter="url(#fsoft)"/><rect x="600" y="210" width="200" height="180" fill="url(#farm)"/><ellipse cx="548" cy="264" rx="100" ry="34" fill="#fff" fill-opacity="0.32" filter="url(#fsoft)"/></g></g></g>
 </svg>
